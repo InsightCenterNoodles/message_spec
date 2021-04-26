@@ -1,0 +1,231 @@
+// Generate with
+// flatc --scoped-enums --reflect-names --gen-mutable -c noodles_server.fbs
+
+include "noodles.fbs";
+
+namespace noodles;
+
+// Server Messages =============================================================
+
+table MethodArg {
+    name : string;
+    doc  : string;
+}
+
+table MethodCreate {
+    id            : MethodID (required);
+    name          : string;
+    documentation : string;
+    returnDoc     : string;
+    argDoc        : [ MethodArg ];
+}
+
+table MethodDelete {
+    id            : MethodID (required);
+}
+
+// =============================================================================
+
+table SignalCreate {
+    id             : SignalID (required);
+    name           : string;
+    documentation  : string;
+    argDoc         : [ MethodArg ];
+}
+
+table SignalDelete {
+    id             : SignalID (required);
+}
+
+// =============================================================================
+
+table TextDefinition { // Text plane, normal +z, up is +y, center: obj origin
+    text   : string (required); // String to render
+    font   : string (required); // Approximate font to use (e.g. Arial)
+    height : float; // The height of the text. The width will be
+    opt_width : float; // Optional width of font.
+}
+
+// non-atomic update
+table ObjectCreateUpdate {
+    id        : ObjectID (required);
+    name      : string;
+    parent    : ObjectID;
+    transform : Mat4;
+    material  : MaterialID;
+    mesh      : GeometryID;
+    lights    : [LightID];
+    tables    : [TableID];
+    instances    : [Mat4];
+    tags         : [string];
+    methods_list : [MethodID];
+    signals_list : [SignalID]; // Dont use "signals" to avoid Qt conflict.
+    text         : TextDefinition;
+}
+
+table ObjectDelete {
+    id        : ObjectID (required);
+}
+
+// =============================================================================
+
+table BufferCreate {
+    id       : BufferID (required);
+    bytes    : [byte]; // This could be empty
+    url      : string; // This could be empty too
+    url_size : uint64; // If you are passing a URL, this should be set
+
+    // If both are empty, data is coming, just hang on for another message of
+    // this kind with the bytes. you may have to request a refresh message
+}
+
+table BufferDelete {
+    id    : BufferID (required);
+}
+
+// =============================================================================
+
+table MaterialCreateUpdate {
+    id           : MaterialID (required);
+    color        : Vec4;
+    metallic     : float;
+    roughness    : float;
+    use_blending : bool;
+    texture_id   : TextureID;
+}
+
+table MaterialDelete {
+    id           : MaterialID (required);
+}
+
+// =============================================================================
+
+table TextureCreateUpdate {
+    id        : TextureID (required);
+    reference : BufferRef (required);
+}
+
+table TextureDelete {
+    id        : TextureID (required);
+}
+
+// =============================================================================
+
+table LightCreateUpdate {
+    id        : LightID (required);
+    color     : Vec3;
+    intensity : float;
+    // only point lights for now
+}
+
+table LightDelete {
+    id        : LightID (required);
+}
+
+// =============================================================================
+
+table ComponentRef {
+    id     : BufferID (required);
+    start  : uint64;
+    size   : uint64;
+    stride : uint64;
+}
+
+table GeometryCreate {
+    id         : GeometryID (required);
+
+    min_extent : Vec3;
+    max_extent : Vec3;
+
+    positions  : ComponentRef; // Vec3
+    normals    : ComponentRef; // Vec3
+    texCoords  : ComponentRef; // Vec2
+    colors     : ComponentRef; // U8Vec4
+    lines      : ComponentRef; // U16Vec2
+    triangles  : ComponentRef; // U16Vec3
+}
+
+table GeometryDelete {
+    id : GeometryID (required);
+}
+
+// =============================================================================
+
+// non-atomic update
+table TableCreateUpdate {
+    id           : TableID (required);
+    name         : string;
+    meta         : string;
+    methods_list : [ MethodID ];
+    signals_list : [ SignalID ];
+}
+
+table TableDelete {
+    id      : TableID (required);
+}
+
+// =============================================================================
+
+table DocumentUpdate {
+    methods_list  : [ MethodID ];
+    signals_list  : [ SignalID ];
+}
+
+table DocumentReset {
+    padding : bool; // these things cannot be empty, so...
+}
+
+// =============================================================================
+
+table SignalInvoke {
+    id  : SignalID (required);
+
+    // if the two below are not set, it is on the document
+    on_object : ObjectID;
+    on_table  : TableID;
+
+    signal_data  : AnyList;
+}
+
+table MethodReply {
+    invoke_ident     : string (required);
+    method_data      : Any;
+    method_exception : string;
+}
+
+// =============================================================================
+
+union ServerMessageType {
+    MethodCreate,
+    MethodDelete,
+    SignalCreate,
+    SignalDelete,
+    ObjectCreateUpdate,
+    ObjectDelete,
+    BufferCreate,
+    BufferDelete,
+    MaterialCreateUpdate,
+    MaterialDelete,
+    TextureCreateUpdate,
+    TextureDelete,
+    LightCreateUpdate,
+    LightDelete,
+    GeometryCreate,
+    GeometryDelete,
+    TableCreateUpdate,
+    TableDelete,
+    DocumentUpdate,
+    DocumentReset,
+    SignalInvoke,
+    MethodReply
+}
+
+table ServerMessage {
+    message : ServerMessageType;
+}
+
+table ServerMessages {
+    messages : [ ServerMessage ];
+}
+
+root_type ServerMessages;

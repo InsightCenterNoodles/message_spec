@@ -1,0 +1,132 @@
+// Generate with
+// flatc --scoped-enums --reflect-names --gen-mutable -c noodles.fbs
+
+namespace noodles;
+
+// Identifiers == These are tables, due to poor language support for structs.
+
+table ObjectID {
+    id_slot : uint32;
+    id_gen  : uint32;
+}
+
+table TableID {
+    id_slot : uint32;
+    id_gen  : uint32;
+}
+
+table SignalID {
+    id_slot : uint32;
+    id_gen  : uint32;
+}
+
+table MethodID {
+    id_slot : uint32;
+    id_gen  : uint32;
+}
+
+table MaterialID {
+    id_slot : uint32;
+    id_gen  : uint32;
+}
+
+table GeometryID {
+    id_slot : uint32;
+    id_gen  : uint32;
+}
+
+table LightID {
+    id_slot : uint32;
+    id_gen  : uint32;
+}
+
+table TextureID {
+    id_slot : uint32;
+    id_gen  : uint32;
+}
+
+table BufferID {
+    id_slot : uint32;
+    id_gen  : uint32;
+}
+
+union AnyIDType {
+    ObjectID,
+    TableID,
+    SignalID,
+    MethodID,
+    MaterialID,
+    GeometryID,
+    LightID,
+    TextureID,
+    BufferID
+}
+
+table AnyID {
+    id : AnyIDType (required);
+}
+
+table MapEntry {
+    name  : string (key);
+    value : Any;
+}
+
+table Text { text : string; }
+table Integer { integer : int64; }
+table IntegerList { integers : [int64]; }
+table Real { real : double; }
+table RealList { reals : [double]; }
+table Data { data : [byte]; }
+table AnyList { list : [Any]; }
+table AnyMap { entries : [MapEntry]; }
+
+union AnyType {
+    Text,
+    Integer,
+    IntegerList,
+    Real,
+    RealList,
+    Data,
+    AnyList,
+    AnyMap,
+    AnyID
+}
+
+table Any {
+    any : AnyType (required);
+}
+
+// Misc Types ==================================================================
+
+struct Vec2 {
+    x : float;
+    y : float;
+}
+
+struct Vec3 {
+    x : float;
+    y : float;
+    z : float;
+}
+
+struct Vec4 {
+    x : float;
+    y : float;
+    z : float;
+    w : float;
+}
+
+struct Mat4 {
+    // for javascript compat, we have to expand this.
+    // components : [float : 16];
+    c1 : Vec4;
+    c2 : Vec4;
+    c3 : Vec4;
+    c4 : Vec4;
+}
+
+table BufferRef {
+    id    : BufferID;
+    start : uint64;
+    size  : uint64;
+}

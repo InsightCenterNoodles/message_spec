@@ -1,0 +1,43 @@
+// Generate with
+// flatc --scoped-enums --reflect-names --gen-mutable -c noodles_client.fbs
+
+include "noodles.fbs";
+
+namespace noodles;
+
+// Client Messages =============================================================
+
+table IntroductionMessage {
+    client_name : string (required);
+}
+
+table MethodInvokeMessage {
+    methodId : MethodID (required);
+
+    // if the two below are not set, it is on the document
+    on_object : ObjectID;
+    on_table  : TableID;
+
+    invoke_ident : string (required);
+    method_args  : AnyList;
+}
+
+table AssetRefreshMessage {
+    for_buffers : [ BufferID ] (required);
+}
+
+union ClientMessageType {
+    IntroductionMessage,
+    MethodInvokeMessage,
+    AssetRefreshMessage
+}
+
+table ClientMessage {
+    content : ClientMessageType (required);
+}
+
+table ClientMessages {
+    messages : [ ClientMessage ] (required);
+}
+
+root_type ClientMessages;
