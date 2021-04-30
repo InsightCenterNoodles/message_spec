@@ -1,7 +1,7 @@
-\documentclass[11pt, oneside]{amsart}   	
-\usepackage{geometry}                		
-\geometry{letterpaper}                   		
-\usepackage{graphicx}				
+\documentclass[11pt, oneside]{amsart}
+\usepackage{geometry}
+\geometry{letterpaper}
+\usepackage{graphicx}
 \usepackage{amssymb}
 \usepackage{microtype}
 \usepackage[dvipsnames]{xcolor}
@@ -12,15 +12,15 @@
 \usepackage{booktabs}
 \usepackage{hyperref}
 
-\lstset{frame=single,  
-	language=c++, 
+\lstset{frame=single,
+	language=c++,
 	basicstyle=\small\ttfamily,
-	breaklines=false, 
+	breaklines=false,
 	tabsize=4,
-	commentstyle=\color{OliveGreen}, 
+	commentstyle=\color{OliveGreen},
 	keywordstyle=\bfseries\color{NavyBlue},
-	emph={  
-	    vec2, vec3, u8vec3, u16vec2, u16vec3, mat4, quat, integer, real, string, AnyID, Color, Scalar, list, optional, variant, null, 
+	emph={
+	    vec2, vec3, u8vec3, u16vec2, u16vec3, mat4, quat, integer, real, string, AnyID, Color, Scalar, list, optional, variant, null,
 	},emphstyle={\bfseries}}
 
 \colorlet{punct}{red!60!black}
@@ -74,7 +74,7 @@
 
 \usetikzlibrary{shapes,arrows}
 
-\tikzstyle{block} = [rectangle, draw, fill=blue!20, 
+\tikzstyle{block} = [rectangle, draw, fill=blue!20,
     text width=5em, text centered, rounded corners, minimum height=4em, node distance=3cm]
 \tikzstyle{line} = [draw]
 
@@ -95,7 +95,7 @@ This document entails a specification for a distributed scene-graph wireline pro
 
 \begin{itemize}
 \item The intent of this document is simplicity, to get a working version implemented so that further improvements can be identified.
-\item The structure here is not intended to mirror the use-case of the HTML DOM + Javascript where code is shipped to clients. That would be restrictive, as it requires the clients either interpret or compile and run code on command. Some clients, such as integrated head mounted systems, do not allow compilation, or are not sufficient computing platforms. 
+\item The structure here is not intended to mirror the use-case of the HTML DOM + Javascript where code is shipped to clients. That would be restrictive, as it requires the clients either interpret or compile and run code on command. Some clients, such as integrated head mounted systems, do not allow compilation, or are not sufficient computing platforms.
 \item Trying to mirror just the HTML DOM part has issues as well; a number of 3D declarative implementations (like QML 3D), all operate on a scenegraph under the hood. It seems more fruitful to just target the scenegraph for modification, and perhaps (as part of the server library) have a declarative component there.
 \item A shared document is desired here, as opposed to the standard browser case where every client has their own copy of state.
 \item Code listings are provided as an example and for exposition only. Clients and servers may be written in any language as long as they conform to the proper wireline protocol.
@@ -141,7 +141,7 @@ This spec is intended to be implemented in a secure network, with the presumptio
 
 \subsubsection{Flatbuffers}
 
-For performance reasons, the \textit{in-situ} capabilities of the serialization medium down-selected available options to Flatbuffers and Cap'n'proto. Both were explored. Table~\ref{tab:serial_comp} compares the two in rough terms. In the end Flatbuffers won out due to more language support out of the box. 
+For performance reasons, the \textit{in-situ} capabilities of the serialization medium down-selected available options to Flatbuffers and Cap'n'proto. Both were explored. Table~\ref{tab:serial_comp} compares the two in rough terms. In the end Flatbuffers won out due to more language support out of the box.
 
 \begin{table}[htbp]
 \begin{tabularx}{.99\textwidth}{p{.9in}XX}
@@ -152,7 +152,7 @@ For performance reasons, the \textit{in-situ} capabilities of the serialization 
 	\midrule
 	\textbf{Flatbuffers} & More languages supported out of the box. Simple internal format, more format features (such as maps, field deprecation, evolution). Easier to obtain performance increases using existing serialization code. & API for some languages is horrible. Some languages require schema to have specific design, adding indirection. \\
 	\bottomrule
-\end{tabularx}	
+\end{tabularx}
 	\caption{Serialization Format Comparison}
 	\label{tab:serial_comp}
 \end{table}
@@ -166,20 +166,20 @@ For performance reasons, the \textit{in-situ} capabilities of the serialization 
 	\node [block, rectangle, dashed] at (.5,4) (doc) {Document};
 	\node [draw, fill=red, rounded corners] at (1.25,4.75) {\tiny Methods};
 	\node [draw, fill=green, rounded corners] at (-.25,4.75) {\tiny Signals};
-	
+
 	\node [block, circle] at (5,4) (root) {Object};
 	\node [draw, fill=red, rounded corners] at (5.75,5) {\tiny Methods};
 	\node [draw, fill=green, rounded corners] at (4.25,5) {\tiny Signals};
-	
+
 	\node [block] at (9,2) (material) {Material};
 	\node [block] at (9,4) (mesh) {Mesh};
 	\node [block] at (12,2) (texture) {Texture};
 	\node [block] at (12,4) (buffer) {Buffer};
-	
+
 	\node [block] at (8.5,6) (light) {Light};
 	\node [block] at (8.75,6) (light) {Light};
 	\node [block] at (9,6) (light) {Light};
-	
+
 	\node [block, circle] at (4,0) (child0) {Child};
 	\node [block, circle] at (5,0) (child1) {Child};
 	\node [block, circle] at (6,0) (child2) {Child};
@@ -188,26 +188,26 @@ For performance reasons, the \textit{in-situ} capabilities of the serialization 
 	\node [block, diamond] at (.75,0) (table2) {Table};
 	\node [block, diamond] at (1,0) (table3) {Table};
 
-	
+
 	\draw[->, thick](doc)--(root);
-	
+
 	\draw[->, thick](root)--(table3);
-	
+
 	\draw[->, thick](root)--(child0);
 	\draw[->, thick](root)--(child1);
 	\draw[->, thick](root)--(child2);
-	
+
 	\draw[->, thick](root)--(mesh);
 	\draw[->, thick](root)--(material);
 	\draw[->, thick](root)--(light);
-	
+
 	\draw[->, thick](material)--(texture);
-	
+
 	\draw[->, thick](texture)--(buffer);
 	\draw[->, thick](mesh)--(buffer);
-	
-	\draw[->, thick](doc)--(table1);	
-	
+
+	\draw[->, thick](doc)--(table1);
+
 	\node [draw, fill=green, rounded corners] at (.25,1) {\tiny Signals};
 	\node [draw, fill=red, rounded corners] at (1.75,1) {\tiny Methods};
 \end{tikzpicture}
@@ -218,7 +218,7 @@ For performance reasons, the \textit{in-situ} capabilities of the serialization 
 
 
 
-The objective of the system is to synchronize, as best as possible, the document between the client and the server. This is accomplished through the use of discrete messages. 
+The objective of the system is to synchronize, as best as possible, the document between the client and the server. This is accomplished through the use of discrete messages.
 
 \subsection{Document}
 
@@ -227,12 +227,12 @@ The Document represents the visualization. It is an entity-component model, with
 The document is implicit. The other elements are explicit.
 
 \subsection{Identifiers}
-Identifiers are a pair of 32-bit unsigned integers; the first being a slot number, and the second being a generation count. This allows non-hashed storage, as there should be no two elements with the same slot number, so it can be used as an index in an array. The generation number is used to help identify if a slot has been recycled by the server, and thus allow detection of stale identifier use. 
+Identifiers are a pair of 32-bit unsigned integers; the first being a slot number, and the second being a generation count. This allows non-hashed storage, as there should be no two elements with the same slot number, so it can be used as an index in an array. The generation number is used to help identify if a slot has been recycled by the server, and thus allow detection of stale identifier use.
 
 An identifier where either the slot and generation are the maximum unsigned integer value is the `null' ID.
 
 \subsection{Objects}
-Each object is provided with an Object ID. Objects are rendered in a hierarchy, starting from a root object with the ID 0. Objects can have any number of children. 
+Each object is provided with an Object ID. Objects are rendered in a hierarchy, starting from a root object with the ID 0. Objects can have any number of children.
 
 Each object is a possibly render-able object, and has a transformation, an optional name, a parent Object ID, a mesh (what to draw), a material (how to draw it), a number of lights, and links to tables. Objects also have a set of string tags, and attached methods and signals. Objects can also be instance rendered.
 
@@ -244,7 +244,7 @@ Tables are a structured way to transmit row oriented data. They consist of a hea
 \subsection{Signals and Methods}
 Signals are notifications from the server to the client. They may contain data, and may come from the document, objects, or tables.
 
-Methods are requests to the server from the client. They may take a set of data parameters, and they may return data as well. They must have a contextual object that they are called on, otherwise they are called on the Document. During the course of a method invocation, signals from the server could be generated. 
+Methods are requests to the server from the client. They may take a set of data parameters, and they may return data as well. They must have a contextual object that they are called on, otherwise they are called on the Document. During the course of a method invocation, signals from the server could be generated.
 
 Each method invocation is tracked by a client-generated arbitrary string. These shall be unique and never re-used. For servers, every method must generate a reply message; the only exception is if the client did not provide an invocation identifier string.
 
@@ -274,7 +274,7 @@ Meshes are mutable.
 		Lines & Index & unsigned short & 2 \\
 		Triangles & Index & unsigned short & 3 \\
 		\bottomrule
-	\end{tabular}	
+	\end{tabular}
 	\caption{Mesh components}
 	\label{tab:mesh_comp}
 \end{table}
@@ -296,7 +296,7 @@ This section discusses common elements to both the server and client message por
 \subsection{Any Type}
 The any type is the foundation value type. it is composed as follows:
 
-\lstinputlisting[language=flatbuffers, firstline=53, lastline=93, caption=Any Definition, label=listing:any]{"../message_spec/noodles.fbs"}
+\lstinputlisting[language=flatbuffers, firstline=53, lastline=93, caption=Any Definition, label=listing:any]{"../interface/noodles.fbs"}
 
 It is a discriminated union of text, integers, real, or bytes. It also contains a generic list, and string-keyed map. For efficiency, there is also a real-list and integer-list type which allow contiguous storage or access of those elements.
 
@@ -313,13 +313,13 @@ Almost all components have strict lifetimes defined by creation and deletion mes
 
 The server sends messages by the root type \texttt{ServerMessages}. This is an array of a union of creation/deletion messages.
 
-\lstinputlisting[language=flatbuffers, firstline=198, lastline=232, caption=Server Root Messages]{"../message_spec/noodles_server.fbs"}
+\lstinputlisting[language=flatbuffers, firstline=198, lastline=232, caption=Server Root Messages]{"../interface/noodles_server.fbs"}
 
 \subsection{Objects}
 
 Objects are created, updated and destroyed in Listing~\ref{listing:obj}.
 
-\lstinputlisting[language=flatbuffers, firstline=42, lastline=68, caption=Object Messages, label=listing:obj]{"../message_spec/noodles_server.fbs"}
+\lstinputlisting[language=flatbuffers, firstline=42, lastline=68, caption=Object Messages, label=listing:obj]{"../interface/noodles_server.fbs"}
 
 Each element is optional, with the exception of the object id.
 
@@ -341,13 +341,13 @@ p_z & c_b & r_z & s_z \\
 \right)
 \end{equation}
 
-Text can be added to an object by means of the optional \texttt{TextDefinition} part of the message. Text is to be rendered how the client sees fit, with the orientation to be centered at the object, the text perpendicular to $+Z$ and up being $+Y$. The height of the text must be specified; the text will then automatically use the font information to compute the text width. If the optional width is specified, then the text shall, keeping the proper font aspect ratio, try to fill the bounds provided. 
+Text can be added to an object by means of the optional \texttt{TextDefinition} part of the message. Text is to be rendered how the client sees fit, with the orientation to be centered at the object, the text perpendicular to $+Z$ and up being $+Y$. The height of the text must be specified; the text will then automatically use the font information to compute the text width. If the optional width is specified, then the text shall, keeping the proper font aspect ratio, try to fill the bounds provided.
 
 \subsection{Tables}
 
 Tables are created and destroyed in the following messages.
 
-\lstinputlisting[language=flatbuffers, firstline=155, lastline=165, caption=Table Messages, label=listing:tbl]{"../message_spec/noodles_server.fbs"}
+\lstinputlisting[language=flatbuffers, firstline=155, lastline=165, caption=Table Messages, label=listing:tbl]{"../interface/noodles_server.fbs"}
 
 Tables have names (which shall be unique), a metadata JSON string, methods, and signals.
 
@@ -355,7 +355,7 @@ Tables have names (which shall be unique), a metadata JSON string, methods, and 
 
 Buffers are created and destroyed in the following messages.
 
-\lstinputlisting[language=flatbuffers, firstline=72, lastline=84, caption=Buffer Messages, label=listing:buff]{"../message_spec/noodles_server.fbs"}
+\lstinputlisting[language=flatbuffers, firstline=72, lastline=84, caption=Buffer Messages, label=listing:buff]{"../interface/noodles_server.fbs"}
 
 Buffers are either inline (in the \texttt{bytes} field) or provided as a URL. If a URL is supplied the size of the buffer must be passed as well. If neither is supplied, the server has the data inline, but has deemed it too large to send immediately to avoid stalling clients. In this case, the server would do well to supply the data through another port and use the URL feature, but some servers are unable to do this. In this case, where both the bytes and URL feature are empty, the \texttt{url\_size} field must still be filled for client pre-allocation. At intervals, the client can send a refresh message to fill in the missing buffers to avoid burdening the websocket (see Section~\ref{sec:refresh_message} ).
 
@@ -363,40 +363,40 @@ Buffers are either inline (in the \texttt{bytes} field) or provided as a URL. If
 
 Geometries are created, and destroyed in the following messages.
 
-\lstinputlisting[language=flatbuffers, firstline=127, lastline=150, caption=Geometry Messages, label=listing:geom]{"../message_spec/noodles_server.fbs"}
+\lstinputlisting[language=flatbuffers, firstline=127, lastline=150, caption=Geometry Messages, label=listing:geom]{"../interface/noodles_server.fbs"}
 
-Limitations in Flatbuffer IDL require some notes here. Geometries are defined by ranges of a buffer for their components. These ranges, in the \texttt{ComponentRef} type, require a buffer, and also \textit{require} a start byte offset of the buffer, as well as a byte size field, and the byte stride between vertex elements. 
+Limitations in Flatbuffer IDL require some notes here. Geometries are defined by ranges of a buffer for their components. These ranges, in the \texttt{ComponentRef} type, require a buffer, and also \textit{require} a start byte offset of the buffer, as well as a byte size field, and the byte stride between vertex elements.
 
-The \texttt{min\_extent} and \texttt{max\_extent} fields are required so that clients can efficiently determine culling boundaries. 
+The \texttt{min\_extent} and \texttt{max\_extent} fields are required so that clients can efficiently determine culling boundaries.
 
-The position field is required. The other vertex components (\texttt{normals, texCoords, colors}) are optional, but recommended. If there is no normal, the mesh should be rendered without lighting to avoid graphical artifacts. If there are no texture coordinates, the coordinate $(0,0)$ should be assumed for each vertex. If there are no colors, the color $(1,1,1,1)$ should be assumed for each vertex. 
+The position field is required. The other vertex components (\texttt{normals, texCoords, colors}) are optional, but recommended. If there is no normal, the mesh should be rendered without lighting to avoid graphical artifacts. If there are no texture coordinates, the coordinate $(0,0)$ should be assumed for each vertex. If there are no colors, the color $(1,1,1,1)$ should be assumed for each vertex.
 
 Index elements are specified in \texttt{lines} and \texttt{triangles}. Only one of these should be active. These specify the indices for line segments and triangles respectively. The stride for these components must be zero, i.e. they must be tightly packed.
 
-\subsection{Texture} 
+\subsection{Texture}
 
 Textures are created, updated, and destroyed in the following messages.
 
-\lstinputlisting[language=flatbuffers, firstline=103, lastline=110, caption=Texture Messages, label=listing:tex]{"../message_spec/noodles_server.fbs"}
+\lstinputlisting[language=flatbuffers, firstline=103, lastline=110, caption=Texture Messages, label=listing:tex]{"../interface/noodles_server.fbs"}
 
 Textures, specify a buffer range for an image. For portability, these are to be in the on-disk format for PNG, JPG, or EXR. KTX is also allowed, but the user should be aware that not all clients can support it.
 
-\subsection{Material} 
+\subsection{Material}
 
 Materials are created, updated, and destroyed in the following messages.
 
-\lstinputlisting[language=flatbuffers, firstline=88, lastline=99, caption=Material Messages, label=listing:mat]{"../message_spec/noodles_server.fbs"}
+\lstinputlisting[language=flatbuffers, firstline=88, lastline=99, caption=Material Messages, label=listing:mat]{"../interface/noodles_server.fbs"}
 
-The \texttt{color} key defines colors in the range of $0 - 1$ for $r,g,b,a$. Other PBR parameters are also in the $0 - 1$ range. The texture ID field is optional, and could also be null to indicate no texture. 
+The \texttt{color} key defines colors in the range of $0 - 1$ for $r,g,b,a$. Other PBR parameters are also in the $0 - 1$ range. The texture ID field is optional, and could also be null to indicate no texture.
 
-Materials can be updated and are not immutable. 
+Materials can be updated and are not immutable.
 
 \subsection{Lights}
 
  Lights are created, updated, and destroyed in the following messages.
- 
- \lstinputlisting[language=flatbuffers, firstline=114, lastline=123, caption=Light Messages, label=listing:light]{"../message_spec/noodles_server.fbs"}
- 
+
+ \lstinputlisting[language=flatbuffers, firstline=114, lastline=123, caption=Light Messages, label=listing:light]{"../interface/noodles_server.fbs"}
+
  The \texttt{color} key defines colors in the range of $0 - 1$ for $r,g,b$. Intensity of the light is unbounded.
 
 
@@ -404,7 +404,7 @@ Materials can be updated and are not immutable.
 
 Signals and Methods are created, and destroyed in the following messages.
 
-\lstinputlisting[language=flatbuffers, firstline=10, lastline=25, caption=Signals Messages, label=listing:sig_meth]{"../message_spec/noodles_server.fbs"}
+\lstinputlisting[language=flatbuffers, firstline=10, lastline=25, caption=Signals Messages, label=listing:sig_meth]{"../interface/noodles_server.fbs"}
 
 Methods must be provided with a human friendly name. Two methods may not share the same name; there is no overloading. Documentation is recommended, but not required, as is return value documentation. Argument information must be provided, at the very least given a name. You may not call a method with more arguments then as specified; use an argument that takes an array type to permit this option.
 
@@ -414,7 +414,7 @@ Signal must be provided with a human friendly name, and also may not share the s
 
 Signals may be invoked on the client and client methods replied to with the following messages.
 
-\lstinputlisting[language=flatbuffers, firstline=180, lastline=194, caption=Communication, label=listing:sig_meth_iv]{"../message_spec/noodles_server.fbs"}
+\lstinputlisting[language=flatbuffers, firstline=180, lastline=194, caption=Communication, label=listing:sig_meth_iv]{"../interface/noodles_server.fbs"}
 
 Either only \texttt{on\_object} or \texttt{on\_table} or neither must be set, to indicate context. Signals may NOT be invoked on a context that does not have them attached.
 
@@ -423,14 +423,14 @@ Method replies must have a previously given method invocation identifier (see Se
 \begin{description}
 	\item[Caller] The caller of the method (client) violated the contract of the method; incorrect number of arguments, bad argument content, etc.
 	\item[Server/Application] A problem occurred with the application. The app itself encountered a problem; for example a client asking to load some data, but the server doesn't have permissions for that data. Or it could be a bug in the application itself.
-	\item[Server/Library] The server library encountered an error. 
+	\item[Server/Library] The server library encountered an error.
 \end{description}
 
 \subsection{Document}
 
 The document is implicit, and always exists. It can be modified with the following messages.
 
-\lstinputlisting[language=flatbuffers, firstline=169, lastline=177, caption=Document Messages, label=listing:doc_mess]{"../message_spec/noodles_server.fbs"}
+\lstinputlisting[language=flatbuffers, firstline=169, lastline=177, caption=Document Messages, label=listing:doc_mess]{"../interface/noodles_server.fbs"}
 
 The document may be updated with \texttt{DocumentUpdate}, to modify the current methods and signals. It may also be completely reset. The reset message, by quirk of Flatbuffers, may not be empty; ignore any fields within. When a document is reset, all components and objects are to be deleted at that point.
 
@@ -442,13 +442,13 @@ In this section we discuss the messages sent by a client.
 
 Client messages are defined as the following root type.
 
-\lstinputlisting[language=flatbuffers, firstline=29, lastline=43, caption=Client Message Root, label=listing:client_root]{"../message_spec/noodles_client.fbs"}
+\lstinputlisting[language=flatbuffers, firstline=29, lastline=43, caption=Client Message Root, label=listing:client_root]{"../interface/noodles_client.fbs"}
 
 \subsection{Introduction}
 
 The client introduces itself to the server with the following message.
 
-\lstinputlisting[language=flatbuffers, firstline=10, lastline=12, caption=Introduction Message, label=listing:intro]{"../message_spec/noodles_client.fbs"}
+\lstinputlisting[language=flatbuffers, firstline=10, lastline=12, caption=Introduction Message, label=listing:intro]{"../interface/noodles_client.fbs"}
 
 The name of the client must not be empty, and should identify a client; host names can be used.
 
@@ -457,7 +457,7 @@ The name of the client must not be empty, and should identify a client; host nam
 
 The client asks to invoke a method with the following message.
 
-\lstinputlisting[language=flatbuffers, firstline=14, lastline=23, caption=Method Invocation, label=listing:invoke]{"../message_spec/noodles_client.fbs"}
+\lstinputlisting[language=flatbuffers, firstline=14, lastline=23, caption=Method Invocation, label=listing:invoke]{"../interface/noodles_client.fbs"}
 
 The message must have an invocation identifier; the asynchronous reply will carry that identifier. Identifiers must not be reused.
 
@@ -465,12 +465,12 @@ Either the \texttt{on\_object} or the \texttt{on\_table} or neither should be se
 
 The arguments to the method must match the documented method signature.
 
-\subsection{Asset Refresh} 
+\subsection{Asset Refresh}
 \label{sec:refresh_message}
 
 The client may ask to receive missing buffer content with the following message.
 
-\lstinputlisting[language=flatbuffers, firstline=25, lastline=27, caption=Buffer Refresh, label=listing:buff_refresh]{"../message_spec/noodles_client.fbs"}
+\lstinputlisting[language=flatbuffers, firstline=25, lastline=27, caption=Buffer Refresh, label=listing:buff_refresh]{"../interface/noodles_client.fbs"}
 
 
 \section{Semantics}
@@ -486,12 +486,12 @@ Another useful abstraction is the \texttt{Row} type; a row is either an \texttt{
 
 A commonly used notion is the concept of a selection within a table of data. Listing~\ref{listing:selection_object} shows, in a JSON-like way, the definition of a Selection object as encoded in a NOODLES Any.
 
-\begin{lstlisting}[language=json, label=listing:selection_object, caption=Selection object definition. Note that the \texttt{to} field in the row ranges is exclusive. ]
-{ 
-	"rows" : [Key, ...], 
-	"row_ranges" : [ 
-	[Key from, Key to ],
-	...
+\begin{lstlisting}[language=json, label=listing:selection_object, caption=Selection object definition. Note that the \texttt{to} field in the row ranges is exclusive. The \texttt{row\_ranges} list \textit{must} have an even number of elements. ]
+{
+	"rows" : [Key, ...],
+	"row_ranges" : [
+	   Key from, Key to,
+	   ...
 	]
 }
 \end{lstlisting}
@@ -505,40 +505,40 @@ To query table information, signals and methods are used. These names are restri
 		\toprule
 		Method Name & Description \\
 		\midrule
-		\lstinline[language=c++]| void subscribe() | 
-		& 
+		\lstinline[language=c++]| void subscribe() |
+		&
 		Subscribe to changes in the table. The client will then receive signals, starting with the \texttt{table\_init} signal.
 		\\
-		\lstinline[language=c++]| void insert_row(Row) | 
+		\lstinline[language=c++]| void insert_row(Row) |
 		&
 		Request to add data to the table.
 		\\
-		\lstinline[language=c++]| void insert_many( [Row] ) | 
+		\lstinline[language=c++]| void insert_many( [Row] ) |
 		&
 		Request to add data to the table.
 		\\
-		\lstinline[language=c++]| void update_row(Row) | 
-		& 
+		\lstinline[language=c++]| void update_row(Row) |
+		&
 		Update a given row in the table.
 		\\
-		\lstinline[language=c++]| void update_many( [ Row ]  ) | 
-		& 
+		\lstinline[language=c++]| void update_many( [ Row ]  ) |
+		&
 		Update a many rows in the table.
 		\\
-		\lstinline[language=c++]| void remove( [Key] ) | 
-		& 
+		\lstinline[language=c++]| void remove( [Key] ) |
+		&
 		Ask to remove a list of keys.
 		\\
-		\lstinline[language=c++]| void clear() | 
-		& 
+		\lstinline[language=c++]| void clear() |
+		&
 		Ask to remove all rows of the table.
 		\\
-		\lstinline[language=c++]| void update_selection(/*snip*/) | 
-		& 
+		\lstinline[language=c++]| void update_selection(/*snip*/) |
+		&
 		Ask to update a selection in the table.
 		\\
 		\bottomrule
-	\end{tabularx}	
+	\end{tabularx}
 	\caption{Table Methods summary}
 	\label{tbl:table_methods}
 \end{table}
@@ -548,41 +548,41 @@ To query table information, signals and methods are used. These names are restri
 		\toprule
 		Signal Name & Description \\
 		\midrule
-		\lstinline[language=c++]| void table_init(/*snip*/) | 
-		& 
+		\lstinline[language=c++]| void table_init(/*snip*/) |
+		&
 		Initialize the table. Sent when the \texttt{subscribe} method is called.
 		\\
-		\lstinline[language=c++]| void rows_inserted( [Row] ) | 
+		\lstinline[language=c++]| void rows_inserted( [Row] ) |
 		&
 		New rows were added to the table.
 		\\
-		\lstinline[language=c++]| void rows_updated( [Row] ) | 
+		\lstinline[language=c++]| void rows_updated( [Row] ) |
 		&
 		Rows were updated in the table.
 		\\
-		\lstinline[language=c++]| void rows_removed( [Key] ) | 
+		\lstinline[language=c++]| void rows_removed( [Key] ) |
 		&
 		Rows in the table were removed.
 		\\
-		\lstinline[language=c++]| void selection_updated(/*snip*/) | 
+		\lstinline[language=c++]| void selection_updated(/*snip*/) |
 		&
 		A selection has changed.
 		\\
 		\bottomrule
-	\end{tabularx}	
+	\end{tabularx}
 	\caption{Table Signals summary}
 	\label{tbl:table_signals}
 \end{table}
 
 \paragraph{\textbf{Subscribe}} This allows the client to receive signals from the table. Without this, no signal should be sent by the server regarding the table. When this call is made, the server should reply with a \texttt{table\_init} signal. The full signature of the signal is as follows:
 
-\lstinline[language=c++]|  | 
+\lstinline[language=c++]|  |
 
 \begin{lstlisting}[language=c++]
-void table_init( 
-	[ string ] // 1, 
-	[ row ] // 2, 
-	[ [string, SelectionObject] ] // 3 
+void table_init(
+	[ string ] // 1,
+	[ row ] // 2,
+	[ [string, SelectionObject] ] // 3
 )
 \end{lstlisting}
 
@@ -624,10 +624,10 @@ Meta : {
 	<other keys>
 }
 
-SimplePlotInfo : { 
+SimplePlotInfo : {
 	"plot_name" : "name",
-	"column_name" : ColumnInfo, 
-	... 
+	"column_name" : ColumnInfo,
+	...
 }
 
 ColumnInfo : {
@@ -649,20 +649,20 @@ In Listing~\ref{listing:simple_sync_meta}, the metadata object will contain a ke
 		"uri" : URI_Info ,
 		<other keys>
 	}
-	
-	URI_Info : { 
+
+	URI_Info : {
 		"address" : "ip",
 		"port" : number,
-		"type" : string 
+		"type" : string
 	}
-	
+
 \end{lstlisting}
 
 
 \subsection{Objects}
 \label{sec:obj_cap}
 
-Objects may carry the logical operations. 
+Objects may carry the logical operations.
 
 For simplicity, in this section, we let \lstinline[language=c++]| vec3 = RealList | and \lstinline[language=c++]| vec4 = RealList |. When used as arguments, the three component and four component vectors require the exact number of components to be supplied in the list. Otherwise the server will consider that to be malformed, and can reject the call.
 
@@ -672,7 +672,7 @@ For clients, this could be when the user clicks on an object, or presses an inte
 
 \lstinputlisting[language=c++, firstline=1, lastline=3]{"./snippets/object_m_defs.cpp"}
 
- It is up to the server application to decide how to handle this `activation'. Activation is either in the string or integer form. Activation names can be obtained through the API (example: `Click', `Clear Options'). An activation can be triggered by the string, or by an integer index. It makes sense to thus tie the order of names to priorities; a $0$ is a primary click, $1$ is an alternate click action, etc. 
+ It is up to the server application to decide how to handle this `activation'. Activation is either in the string or integer form. Activation names can be obtained through the API (example: `Click', `Clear Options'). An activation can be triggered by the string, or by an integer index. It makes sense to thus tie the order of names to priorities; a $0$ is a primary click, $1$ is an alternate click action, etc.
 
 \subsubsection{Options}
 
@@ -680,7 +680,7 @@ Options are is conceptually the same thing as a combo-box widget.
 
 \lstinputlisting[language=c++, firstline=5, lastline=7]{"./snippets/object_m_defs.cpp"}
 
- A list of choices can be presented for an object, and an option can be set. 
+ A list of choices can be presented for an object, and an option can be set.
 
 \subsubsection{Movable}
 
@@ -700,7 +700,7 @@ The selection API allows for a number of different selection tools. Others can b
 
 For \texttt{select\_region}, the selection region is supplied as an axis aligned bounding box, and a boolean option for either selection (true) or deselection (false). For \texttt{select\_sphere}, a position and a radius is supplied. For \texttt{select\_half\_plane}, a point and a normal is provided.
 
-To support multiple selections, consider adding options and activators to your object. 
+To support multiple selections, consider adding options and activators to your object.
 
 \subsubsection{Query}
 Objects can be probed to obtain a data value or annotation.
@@ -752,12 +752,12 @@ From this point onward, the client can invoke methods, and the server can send s
 
 \section{Common Flatbuffer Specification}
 
-\lstinputlisting[language=flatbuffers]{"../message_spec/noodles.fbs"}
+\lstinputlisting[language=flatbuffers]{"../interface/noodles.fbs"}
 
 \section{Server Message Flatbuffer Specification}
-\lstinputlisting[language=flatbuffers]{"../message_spec/noodles_server.fbs"}
+\lstinputlisting[language=flatbuffers]{"../interface/noodles_server.fbs"}
 
 \section{Client Message Flatbuffer Specification}
-\lstinputlisting[language=flatbuffers]{"../message_spec/noodles_client.fbs"}
+\lstinputlisting[language=flatbuffers]{"../interface/noodles_client.fbs"}
 
-\end{document}  
+\end{document}
