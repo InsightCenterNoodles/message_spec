@@ -505,23 +505,15 @@ To query table information, signals and methods are used. These names are restri
 		\toprule
 		Method Name & Description \\
 		\midrule
-		\lstinline[language=c++]| void tbl_subscribe() |
+		\lstinline[language=c++]| TblInit tbl_subscribe() |
 		&
-		Subscribe to changes in the table. The client will then receive signals, starting with the \texttt{table\_init} signal.
+		Subscribe to changes in the table, receiving initial table state. The client will then receive signals.
 		\\
-		\lstinline[language=c++]| void tbl_insert_row(Row) |
+		\lstinline[language=c++]| void tbl_insert([Column]) |
 		&
-		Request to add data to the table.
+		Request to add rows of data to the table, as a pack of column segments.
 		\\
-		\lstinline[language=c++]| void tbl_insert_many([Column]) |
-		&
-		Request to add many rows of data to the table, as a pack of column segments.
-		\\
-  		\lstinline[language=c++]| void tbl_update(Key, Row) |
-        &
-        Request to update data to the table.
-        \\
-        \lstinline[language=c++]| void tbl_update_n([Key], [Column]) |
+        \lstinline[language=c++]| void tbl_update([Key], [Column]) |
         &
         Request to update many rows of data to the table, as a pack of column segments.
         \\
@@ -548,9 +540,9 @@ To query table information, signals and methods are used. These names are restri
 		\toprule
 		Signal Name & Description \\
 		\midrule
-		\lstinline[language=c++]| void tbl_init(/*snip*/) |
+		\lstinline[language=c++]| void tbl_reset() |
 		&
-		Initialize the table. Sent when the \texttt{subscribe} method is called.
+		Reinitialize the table. Sent if the table is cleared or reset in some way.
 		\\
 		\lstinline[language=c++]| void tbl_updated([Key], [Column]) |
 		&
@@ -570,22 +562,20 @@ To query table information, signals and methods are used. These names are restri
 	\label{tbl:table_signals}
 \end{table}
 
-\paragraph{\textbf{Subscribe}} This allows the client to receive signals from the table. Without this, no signal should be sent by the server regarding the table. When this call is made, the server should reply with a \texttt{table\_init} signal. The full signature of the signal is as follows:
+\paragraph{\textbf{Subscribe}} This allows the client to receive signals from the table. Without this, no signal should be sent by the server regarding the table. When this call is made, the server will reply with a \texttt{TblInit} object. The full object definition is as follows:
 
-\lstinline[language=c++]|  |
-
-\begin{lstlisting}[language=c++]
-void tbl_init(
-	[ string ], // 1
-    [ Key ], //2
-	[ Column ], // 2
-	[ [string, SelectionObject] ] // 3
-)
+\begin{lstlisting}[language=json]
+TblInit : {
+	"columns" : [ string ], //1
+    "keys" : [ Key ], //2
+	"data" : [ Column ], // 2
+	"selections" : [ [string, SelectionObject] ] // 3
+}
 \end{lstlisting}
 
-Argument 1 is a list of columns, including the key column as the first. This establishes a column order that is used to interpret and pack data values later in other calls and signals. The second argument provides the current data that is in the table, including the key column. The third is a pack of the current selections that are available in the table; this is provided as a list of pairs, where the first part of the pair is the string identifier of the selection and the second is the selection object that defines the selection.
+Part 1 is a list of columns. This establishes a column order that is used to interpret and pack data values later in other calls and signals. The second elements provide the current data that is in the table, as well as the keys used to identify rows. The third is a pack of the current selections that are available in the table; this is provided as a list of pairs, where the first part of the pair is the string identifier of the selection and the second is the selection object that defines the selection.
 
-Should the server re-issue the \texttt{table\_init} signal, this would imply that the table has been reset/redefined.
+\paragraph{\textbf{Reset}} Should the server issue the \texttt{tbl\_reset} signal, this would imply that the table has been reset, with no data, and no selections, but with the same header.
 
 \paragraph{\textbf{Insertion}} Data may be inserted into the table through both the row and many versions of the call. Note that the key cannot be specified, thus the row length should be for all the other columns, in column order. The many version simply takes a list of rows to be inserted. Insertion success is demonstrated through reception of the \texttt{rows\_inserted} signal; this signal provides the data inserted along with the keys that were assigned to that row, i.e. the full row of data for all columns.
 
