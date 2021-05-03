@@ -480,9 +480,9 @@ The client may ask to receive missing buffer content with the following message.
 
 Tables are a way of exposing record data to clients so that they can either provide an alternative representation of that data or to allow command line clients access to the data. An example of an alternative representation would be a 2D chart that could be provided for a lightweight 2D client instead of a 3D plot.
 
-Tables consist of columns (with unique names) and rows. Rows are identified by a \texttt{Key}, which is an integer. Each table therefore has a \texttt{Key} column as the first. Keys are assumed to be monotonically increasing.
+Tables consist of columns (with unique names) and rows. Rows are identified by a \texttt{Key}, which is an integer. Keys are assumed to be monotonically increasing, that is, new insertions into the database are given a new key larger than any key seen before..
 
-Another useful abstraction is the \texttt{Row} type; a row is either an \texttt{AnyList} or a \texttt{RealList}.
+Another useful abstraction is the \texttt{Row} type; a row is either an \texttt{AnyList} or a \texttt{RealList}. A \texttt{Column} is the same.
 
 A commonly used notion is the concept of a selection within a table of data. Listing~\ref{listing:selection_object} shows, in a JSON-like way, the definition of a Selection object as encoded in a NOODLES Any.
 
@@ -501,39 +501,39 @@ A commonly used notion is the concept of a selection within a table of data. Lis
 To query table information, signals and methods are used. These names are restricted and cannot be used by the user application. Note, indexes are all zero-based. Tables~\ref{tbl:table_methods} and~\ref{tbl:table_signals} list the data related methods and signals a table can support. The server should not send any data or signals to the client for a given table \emph{unless} a client has expressed interest by calling the subscribe method. This is to avoid stressing clients that have no table interface and to reduce unnecessary network traffic. Further it is up to the server to honor these methods; should the server not support modification, for example, requests will be dropped.
 
 \begin{table}
-	\begin{tabularx}{.9\textwidth}{p{2.25in}X}
+	\begin{tabularx}{.9\textwidth}{p{2.5in}X}
 		\toprule
 		Method Name & Description \\
 		\midrule
-		\lstinline[language=c++]| void subscribe() |
+		\lstinline[language=c++]| void tbl_subscribe() |
 		&
 		Subscribe to changes in the table. The client will then receive signals, starting with the \texttt{table\_init} signal.
 		\\
-		\lstinline[language=c++]| void insert_row(Row) |
+		\lstinline[language=c++]| void tbl_insert_row(Row) |
 		&
 		Request to add data to the table.
 		\\
-		\lstinline[language=c++]| void insert_many( [Row] ) |
+		\lstinline[language=c++]| void tbl_insert_many([Column]) |
 		&
-		Request to add data to the table.
+		Request to add many rows of data to the table, as a pack of column segments.
 		\\
-		\lstinline[language=c++]| void update_row(Row) |
-		&
-		Update a given row in the table.
-		\\
-		\lstinline[language=c++]| void update_many( [ Row ]  ) |
-		&
-		Update a many rows in the table.
-		\\
-		\lstinline[language=c++]| void remove( [Key] ) |
+  		\lstinline[language=c++]| void tbl_update(Key, Row) |
+        &
+        Request to update data to the table.
+        \\
+        \lstinline[language=c++]| void tbl_update_n([Key], [Column]) |
+        &
+        Request to update many rows of data to the table, as a pack of column segments.
+        \\
+		\lstinline[language=c++]| void tbl_remove([Key]) |
 		&
 		Ask to remove a list of keys.
 		\\
-		\lstinline[language=c++]| void clear() |
+		\lstinline[language=c++]| void tbl_clear() |
 		&
 		Ask to remove all rows of the table.
 		\\
-		\lstinline[language=c++]| void update_selection(/*snip*/) |
+		\lstinline[language=c++]| void tbl_update_selection(/*snip*/) |
 		&
 		Ask to update a selection in the table.
 		\\
@@ -544,27 +544,23 @@ To query table information, signals and methods are used. These names are restri
 \end{table}
 
 \begin{table}
-	\begin{tabularx}{.9\textwidth}{p{2.25in}X}
+	\begin{tabularx}{.9\textwidth}{p{2.5in}X}
 		\toprule
 		Signal Name & Description \\
 		\midrule
-		\lstinline[language=c++]| void table_init(/*snip*/) |
+		\lstinline[language=c++]| void tbl_init(/*snip*/) |
 		&
 		Initialize the table. Sent when the \texttt{subscribe} method is called.
 		\\
-		\lstinline[language=c++]| void rows_inserted( [Row] ) |
-		&
-		New rows were added to the table.
-		\\
-		\lstinline[language=c++]| void rows_updated( [Row] ) |
+		\lstinline[language=c++]| void tbl_updated([Key], [Column]) |
 		&
 		Rows were updated in the table.
 		\\
-		\lstinline[language=c++]| void rows_removed( [Key] ) |
+		\lstinline[language=c++]| void tbl_rows_removed([Key]) |
 		&
 		Rows in the table were removed.
 		\\
-		\lstinline[language=c++]| void selection_updated(/*snip*/) |
+		\lstinline[language=c++]| void tbl_selection_updated(/*snip*/) |
 		&
 		A selection has changed.
 		\\
@@ -579,9 +575,10 @@ To query table information, signals and methods are used. These names are restri
 \lstinline[language=c++]|  |
 
 \begin{lstlisting}[language=c++]
-void table_init(
-	[ string ] // 1,
-	[ row ] // 2,
+void tbl_init(
+	[ string ], // 1
+    [ Key ], //2
+	[ Column ], // 2
 	[ [string, SelectionObject] ] // 3
 )
 \end{lstlisting}
@@ -599,7 +596,7 @@ Should the server re-issue the \texttt{table\_init} signal, this would imply tha
 \paragraph{\textbf{Selection}} Data selections can be made through the \texttt{update\_selection} call. The full signature of the call is as follows:
 
 \begin{lstlisting}[language=c++]
-	void update_selection( string, SelectionObject );
+	void tbl_update_selection( string, SelectionObject );
 \end{lstlisting}
 
 The first argument denotes the selection to update or add, and the selection object defines what that selection should be updated/initialized to. A selection object that is empty, i.e. specifying no rows or ranges is considered the empty selection and denotes that the selection should be deleted from clients.
@@ -607,7 +604,7 @@ The first argument denotes the selection to update or add, and the selection obj
 This shall trigger the selection update signal. The full signature of the signal is as follows:
 
 \begin{lstlisting}[language=c++]
-	void selection_updated( string, SelectionObject );
+	void tbl_selection_updated( string, SelectionObject );
 \end{lstlisting}
 
 This mirrors the update call, and denotes which selection has changed, and what to change it to.
