@@ -93,7 +93,7 @@ union AnyType {
 }
 
 table Any {
-    any : AnyType (required);
+    any : AnyType;
 }
 
 // Misc Types ==================================================================
