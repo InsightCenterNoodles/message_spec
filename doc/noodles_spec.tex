@@ -720,6 +720,18 @@ Objects may be given tags. They are a list of strings. These allow the client to
 	\bottomrule
 \end{tabularx}
 
+\subsection{Scene Semantics}
+
+
+\subsubsection{Reporting}
+
+Clients may inform the server of areas of `interest' of the given scene through reporting methods attached to the document.
+
+\lstinputlisting[language=c++, firstline=1, lastline=1]{"./snippets/doc_m_defs.cpp"}
+
+Note that `interest' is different for different clients. As an example, a desktop client may wish to signal interest via a mouse. An AR system may consider an eye-tracking based approach. For an Immersive VR environment, head direction might be used.
+
+This method, if it exists, should not be called very often; as we are sampling the user, view information can be provided at a human scale, on the order of a second or more.
 
 % ===================================================
 
