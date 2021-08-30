@@ -187,10 +187,16 @@ table SignalInvoke {
     signal_data  : AnyList;
 }
 
+table MethodException {
+    code    : int64 (required);
+    message : string; // optional
+    data    : Any;    // optional
+}
+
 table MethodReply {
     invoke_ident     : string (required);
-    method_data      : Any;
-    method_exception : string;
+    method_data      : Any;             // optional
+    method_exception : MethodException; // optional
 }
 
 // =============================================================================

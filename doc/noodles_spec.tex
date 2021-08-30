@@ -687,7 +687,7 @@ The selection API allows for a number of different selection tools. Others can b
 
 For \texttt{select\_region}, the selection region is supplied as an axis aligned bounding box, and a boolean option for either selection (true) or deselection (false). For \texttt{select\_sphere}, a position and a radius is supplied. For \texttt{select\_half\_plane}, a point and a normal is provided.
 
-To support multiple selections, consider adding options and activators to your object.
+To support multiple selections, consider adding options and activators to your object. All coordinates provided are in the object-local coordinate space.
 
 \subsubsection{Query}
 Objects can be probed to obtain a data value or annotation.
