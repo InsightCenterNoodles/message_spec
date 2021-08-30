@@ -16,8 +16,8 @@ table MethodCreate {
     id            : MethodID (required);
     name          : string;
     documentation : string;
-    returnDoc     : string;
-    argDoc        : [ MethodArg ];
+    return_doc    : string;
+    arg_doc       : [ MethodArg ];
 }
 
 table MethodDelete {
@@ -30,7 +30,7 @@ table SignalCreate {
     id             : SignalID (required);
     name           : string;
     documentation  : string;
-    argDoc         : [ MethodArg ];
+    arg_doc        : [ MethodArg ];
 }
 
 table SignalDelete {
@@ -139,7 +139,7 @@ table GeometryCreate {
 
     positions  : ComponentRef; // Vec3
     normals    : ComponentRef; // Vec3
-    texCoords  : ComponentRef; // Vec2
+    tex_coords : ComponentRef; // Vec2
     colors     : ComponentRef; // U8Vec4
     lines      : ComponentRef; // U16Vec2
     triangles  : ComponentRef; // U16Vec3
@@ -188,7 +188,7 @@ table SignalInvoke {
 }
 
 table MethodException {
-    code    : int64 (required);
+    code    : int64;  // required
     message : string; // optional
     data    : Any;    // optional
 }

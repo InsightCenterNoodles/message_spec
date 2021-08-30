@@ -12,7 +12,7 @@ table IntroductionMessage {
 }
 
 table MethodInvokeMessage {
-    methodId : MethodID (required);
+    method_id : MethodID (required);
 
     // if the two below are not set, it is on the document
     on_object : ObjectID;

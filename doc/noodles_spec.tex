@@ -412,19 +412,33 @@ Signal must be provided with a human friendly name, and also may not share the s
 
 \subsection{Signal Invoke \& Method Reply}
 
-Signals may be invoked on the client and client methods replied to with the following messages.
+Signals may be invoked on the client and client methods replied with the following messages.
 
-\lstinputlisting[language=flatbuffers, firstline=180, lastline=194, caption=Communication, label=listing:sig_meth_iv]{"../interface/noodles_server.fbs"}
+\lstinputlisting[language=flatbuffers, firstline=180, lastline=200, caption=Communication, label=listing:sig_meth_iv]{"../interface/noodles_server.fbs"}
 
 Either only \texttt{on\_object} or \texttt{on\_table} or neither must be set, to indicate context. Signals may NOT be invoked on a context that does not have them attached.
 
-Method replies must have a previously given method invocation identifier (see Section \ref{sec:method_invoke} ). If the method could not be executed, an exception field is filled instead of data. The method should let the caller know what went wrong, and who should fix it. Consider three cases:
+Method replies must have a previously given method invocation identifier (see Section \ref{sec:method_invoke} ). If the method could not be executed, an exception field is filled instead of data. 
 
-\begin{description}
-	\item[Caller] The caller of the method (client) violated the contract of the method; incorrect number of arguments, bad argument content, etc.
-	\item[Server/Application] A problem occurred with the application. The app itself encountered a problem; for example a client asking to load some data, but the server doesn't have permissions for that data. Or it could be a bug in the application itself.
-	\item[Server/Library] The server library encountered an error.
-\end{description}
+During an exception, the method should let the caller know what went wrong. A unique code for the error must be filled. A short message should be provided for users; additional data may also be provided for things like nested errors. Given the differences in clients, however, it is likely that such data would be flattened to a string.
+
+Reserved error codes are provided in Table~\ref{tab:error_codes} and are designed to match the XMLRPC and JSONRPC codes. Error codes $-32768$ to $-32000$ are reserved by the spec.
+
+\begin{table}
+	\begin{tabular}{ccp{3.5in}}
+		\toprule
+		\textbf{Code} & \textbf{Message} & \textbf{Description} \\
+		\midrule
+		-32700 & Parse Error & Given invocation object is malformed and failed to be validated \\
+		-32600 & Invalid Request & Given invocation object does not fulfill required semantics \\
+		-32601 & Method Not Found & Given invocation object tries to call a method that does not exist \\
+		-32602 & Invalid Parameters & Given invocation tries to call a method with invalid parameters \\
+		-32603 & Internal Error & The invocation fulfills all requirements, but an internal error prevents the server from executing it \\		
+		\bottomrule
+	\end{tabular}
+	\caption{Error Codes}
+	\label{tab:error_codes}
+\end{table}
 
 \subsection{Document}
 
