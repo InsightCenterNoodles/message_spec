@@ -39,31 +39,80 @@ table SignalDelete {
 
 // =============================================================================
 
-table TextDefinition { // Text plane, normal +z, up is +y, center: obj origin
-    text   : string (required); // String to render
-    font   : string (required); // Approximate font to use (e.g. Arial)
-    height : float; // The height of the text. The width will be
-    opt_width : float; // Optional width of font.
+table EmptyDefinition {
+    dummy : bool = false;
 }
 
-// non-atomic update
+table TextDefinition { // Text plane, normal +z, up is +y, center: obj origin
+    text      : string (required); // String to render
+    font      : string (required); // Approximate font to use (e.g. Arial)
+    height    : float; // The height of the text plane.
+    opt_width : float; // Optional width of text, infer from height if missing.
+}
+
+table WebpageDefinition {
+    url    : string (required);
+    height : float = .5;
+    width  : float = .5;
+}
+
+table RenderableDefinition {
+    material    : MaterialID (required);
+    mesh        : GeometryID (required);
+    instances   : [Mat4]; // optional
+    instance_bb : BoundingBox; // optional override for instanced object culling
+}
+
+union ObjectDefinition {
+    EmptyDefinition,
+    TextDefinition,
+    WebpageDefinition,
+    RenderableDefinition
+}
+
 table ObjectCreateUpdate {
-    id        : ObjectID (required);
-    name      : string;
-    parent    : ObjectID;
-    transform : Mat4;
-    material  : MaterialID;
-    mesh      : GeometryID;
-    lights    : [LightID];
-    tables    : [TableID];
-    instances    : [Mat4];
+    id           : ObjectID (required);
+    name         : string;
+    parent       : ObjectID;
+    transform    : Mat4;
+    definition   : ObjectDefinition;
+    lights       : [LightID];
+    tables       : [TableID];
     tags         : [string];
     methods_list : [MethodID];
     signals_list : [SignalID]; // Dont use "signals" to avoid Qt conflict.
-    text         : TextDefinition;
+    influence    : BoundingBox;
+    visibility   : bool;
 }
 
 table ObjectDelete {
+    id        : ObjectID (required);
+}
+
+// =============================================================================
+
+table SimplePlot {
+    definition : string (required);
+}
+
+table URLPlot {
+    url : string (required);
+}
+
+union PlotType {
+    SimplePlot,
+    URLPlot
+}
+
+table PlotCreateUpdate {
+    id           : ObjectID (required);
+    table        : TableID;
+    type         : PlotType;
+    methods_list : [MethodID];
+    signals_list : [SignalID];
+}
+
+table PlotDelete {
     id        : ObjectID (required);
 }
 
@@ -73,7 +122,7 @@ table BufferCreate {
     id       : BufferID (required);
     bytes    : [byte]; // This could be empty
     url      : string; // This could be empty too
-    url_size : uint64; // If you are passing a URL, this should be set
+    size     : uint64; // Size of buffer
 
     // If both are empty, data is coming, just hang on for another message of
     // this kind with the bytes. you may have to request a refresh message
@@ -111,11 +160,16 @@ table TextureDelete {
 
 // =============================================================================
 
+enum LightType : byte {
+    POINT = 0,
+    SUN,
+}
+
 table LightCreateUpdate {
-    id        : LightID (required);
-    color     : Vec3;
-    intensity : float;
-    // only point lights for now
+    id         : LightID (required);
+    color      : Vec3;
+    intensity  : float;
+    light_type : LightType; // after being set once, updates ignored
 }
 
 table LightDelete {
@@ -124,7 +178,7 @@ table LightDelete {
 
 // =============================================================================
 
-table ComponentRef {
+table ComponentRef { // All elements required, but not expressable in this spec
     id     : BufferID (required);
     start  : uint64;
     size   : uint64;

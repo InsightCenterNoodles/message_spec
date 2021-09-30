@@ -10,6 +10,11 @@ table ObjectID {
     id_gen  : uint32;
 }
 
+table PlotID {
+    id_slot : uint32;
+    id_gen  : uint32;
+}
+
 table TableID {
     id_slot : uint32;
     id_gen  : uint32;
@@ -123,6 +128,11 @@ struct Mat4 {
     c2 : Vec4;
     c3 : Vec4;
     c4 : Vec4;
+}
+
+struct BoundingBox {
+    aabb_min : Vec3;
+    aabb_max : Vec3;
 }
 
 table BufferRef {

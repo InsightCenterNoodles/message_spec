@@ -317,7 +317,7 @@ The server sends messages by the root type \texttt{ServerMessages}. This is an a
 
 \subsection{Objects}
 
-Objects are created, updated and destroyed in Listing~\ref{listing:obj}.
+Objects are created, updated and destroyed in Listing~\ref{listing:obj}. All coordinates are provided in the OpenGL right hand manner.
 
 \lstinputlisting[language=flatbuffers, firstline=42, lastline=68, caption=Object Messages, label=listing:obj]{"../interface/noodles_server.fbs"}
 
@@ -327,7 +327,7 @@ If the object ID has not been seen before by the client, it is assumed to be a n
 
 If the object ID has been seen before and not deleted, it should update the existing object with the elements that are provided in the message. For example, an message for Object ID 5 that contains a transform will only update object 5's transform, and not change other elements. In another example, to detach a material from an object, an update message with a null material ID is used.
 
-Instances of the underlying meshes are specified by a list of matrices, with a matrix per instance. Using column major ordering, Matrix~\ref{eqn.instances}, shows how position $p$, rotation $r$ (as a quaternion), color $c$, and scale $s$ are specified. Access is assumed to be by column, i.e.\ $M_0 = p$.
+Instances of the underlying meshes are specified by a list of matrices, with a matrix per instance. Using column major ordering, Matrix~\ref{eqn.instances}, shows how position $p$, rotation $r$ (as a quaternion), color $c$, and scale $s$ are specified. Access is assumed to be by column, i.e.\ $M_0 = p$. Transforms should be applied in the following order: scaling, rotation, translation.
 
 \begin{equation}
 \label{eqn.instances}
@@ -695,13 +695,13 @@ Positions, rotations and scales are in the coordinate system of the parent objec
 
 Regions of an object can be `selected'. What this means is up to the application.
 
-\lstinputlisting[language=c++, firstline=13, lastline=15]{"./snippets/object_m_defs.cpp"}
+\lstinputlisting[language=c++, firstline=13, lastline=16]{"./snippets/object_m_defs.cpp"}
 
-The selection API allows for a number of different selection tools. Others can be forged through the use of the movable API, and activators.
+The selection API allows for a number of different selection tools. Others can be forged through the use of the movable API, and activators. All coordinates provided are in the object-local coordinate space.
 
-For \texttt{select\_region}, the selection region is supplied as an axis aligned bounding box, and a boolean option for either selection (true) or deselection (false). For \texttt{select\_sphere}, a position and a radius is supplied. For \texttt{select\_half\_plane}, a point and a normal is provided.
+For \texttt{select\_region}, the selection region is supplied as an axis aligned bounding box, and an option for either additive selection ($> 0$), deselection ($< 0$) or replacement ($= 0$). For \texttt{select\_sphere}, a position and a radius is supplied. For \texttt{select\_half\_plane}, a point and a normal is provided. For \texttt{select\_hull}, the client provides a list of 3D points, and an index list interpreted as a mesh hull.
 
-To support multiple selections, consider adding options and activators to your object. All coordinates provided are in the object-local coordinate space.
+To support multiple selections, consider adding options and activators to your object. 
 
 \subsubsection{Query}
 Objects can be probed to obtain a data value or annotation.
