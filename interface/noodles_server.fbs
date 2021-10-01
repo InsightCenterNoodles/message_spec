@@ -40,15 +40,15 @@ table SignalDelete {
 // =============================================================================
 
 table EmptyDefinition {
-    dummy : bool = false;
+    padding : bool = false; // cannot be empty
 }
 
 // atomic update semantics
 table TextDefinition { // Text plane, normal +z, up is +y, center: obj origin
-    text      : string (required); // String to render
-    font      : string (required); // Approximate font to use (e.g. Arial)
-    height    : float; // The height of the text plane.
-    opt_width : float; // Optional width of text, infer from height if missing.
+    text   : string (required); // String to render
+    font   : string (required); // Approximate font to use (e.g. Arial)
+    height : float; // The height of the text plane.
+    width  : float = -1; // Optional width of text, infer from height if < 0
 }
 
 // atomic update semantics
@@ -112,6 +112,7 @@ union PlotType {
     URLPlot
 }
 
+// non-atomic update semantics
 table PlotCreateUpdate {
     id           : ObjectID (required);
     table        : TableID;
@@ -142,6 +143,7 @@ table BufferDelete {
 
 // =============================================================================
 
+// non-atomic update semantics
 table MaterialCreateUpdate {
     id           : MaterialID (required);
     color        : Vec4;
@@ -157,6 +159,7 @@ table MaterialDelete {
 
 // =============================================================================
 
+// non-atomic update semantics
 table TextureCreateUpdate {
     id        : TextureID (required);
     reference : BufferRef (required);
@@ -173,6 +176,7 @@ enum LightType : byte {
     SUN,
 }
 
+// non-atomic update semantics
 table LightCreateUpdate {
     id         : LightID (required);
     color      : Vec3;
@@ -196,8 +200,7 @@ table ComponentRef { // All elements required, but not expressable in this spec
 table GeometryCreate {
     id         : GeometryID (required);
 
-    min_extent : Vec3;
-    max_extent : Vec3;
+    extent : BoundingBox;
 
     positions  : ComponentRef; // Vec3
     normals    : ComponentRef; // Vec3
@@ -213,7 +216,7 @@ table GeometryDelete {
 
 // =============================================================================
 
-// non-atomic update
+// non-atomic update semantics
 table TableCreateUpdate {
     id           : TableID (required);
     name         : string;
