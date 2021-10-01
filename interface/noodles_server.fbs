@@ -43,6 +43,7 @@ table EmptyDefinition {
     dummy : bool = false;
 }
 
+// atomic update semantics
 table TextDefinition { // Text plane, normal +z, up is +y, center: obj origin
     text      : string (required); // String to render
     font      : string (required); // Approximate font to use (e.g. Arial)
@@ -50,12 +51,14 @@ table TextDefinition { // Text plane, normal +z, up is +y, center: obj origin
     opt_width : float; // Optional width of text, infer from height if missing.
 }
 
+// atomic update semantics
 table WebpageDefinition {
     url    : string (required);
     height : float = .5;
     width  : float = .5;
 }
 
+// atomic update semantics
 table RenderableDefinition {
     material    : MaterialID (required);
     mesh        : GeometryID (required);
@@ -70,6 +73,11 @@ union ObjectDefinition {
     RenderableDefinition
 }
 
+struct ObjectVisibility {
+    visible : bool;
+}
+
+// nonatomic update semantics
 table ObjectCreateUpdate {
     id           : ObjectID (required);
     name         : string;
@@ -82,7 +90,7 @@ table ObjectCreateUpdate {
     methods_list : [MethodID];
     signals_list : [SignalID]; // Dont use "signals" to avoid Qt conflict.
     influence    : BoundingBox;
-    visibility   : bool;
+    visibility   : ObjectVisibility;
 }
 
 table ObjectDelete {
