@@ -123,7 +123,7 @@ table PlotCreateUpdate {
 }
 
 table PlotDelete {
-    id        : ObjectID (required);
+    id        : PlotID (required);
 }
 
 // =============================================================================
