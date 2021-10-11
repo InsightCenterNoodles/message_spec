@@ -115,7 +115,7 @@ union PlotType {
 
 // non-atomic update semantics
 table PlotCreateUpdate {
-    id           : ObjectID (required);
+    id           : PlotID (required);
     table        : TableID;
     type         : PlotType;
     methods_list : [MethodID];
