@@ -10,8 +10,8 @@ namespace noodles;
 table MethodArg {
     name : string;
     doc  : string;
+    hint : string;
 }
-
 table MethodCreate {
     id            : MethodID (required);
     name          : string;
@@ -86,6 +86,7 @@ table ObjectCreateUpdate {
     definition   : ObjectDefinition;
     lights       : [LightID];
     tables       : [TableID];
+    plots        : [PlotID];
     tags         : [string];
     methods_list : [MethodID];
     signals_list : [SignalID]; // Dont use "signals" to avoid Qt conflict.
@@ -248,6 +249,7 @@ table SignalInvoke {
     // if the two below are not set, it is on the document
     on_object : ObjectID;
     on_table  : TableID;
+    on_plot   : PlotID;
 
     signal_data  : AnyList;
 }

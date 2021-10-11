@@ -9,14 +9,16 @@ namespace noodles;
 
 table IntroductionMessage {
     client_name : string (required);
+    version : uint32 = 0;
 }
 
 table MethodInvokeMessage {
     method_id : MethodID (required);
 
-    // if the two below are not set, it is on the document
+    // if any of the below is not set, it is on the document
     on_object : ObjectID;
     on_table  : TableID;
+    on_plot   : PlotID;
 
     invoke_ident : string (required);
     method_args  : AnyList;

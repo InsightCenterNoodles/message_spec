@@ -6,6 +6,7 @@
 \usepackage{microtype}
 \usepackage[dvipsnames]{xcolor}
 \usepackage{tikz}
+\usetikzlibrary{backgrounds}
 \usepackage{todonotes}
 \usepackage{listings}
 \usepackage{tabularx}
@@ -79,7 +80,7 @@
 \tikzstyle{line} = [draw]
 
 
-\title{NOODLES v0.2: A Protocol Specification}
+\title{NOODLES v0.3: A Protocol Specification}
 \author{Nicholas Brunhart-Lupo}
 
 \begin{document}
@@ -161,15 +162,14 @@ For performance reasons, the \textit{in-situ} capabilities of the serialization 
 
 \begin{figure}[htbp]
 \begin{center}
-\begin{tikzpicture}
+\begin{tikzpicture}[framed,background rectangle/.style={double, thick, draw=black, rounded corners, top color=blue!20}]
 	% Place nodes
-	\node [block, rectangle, dashed] at (.5,4) (doc) {Document};
+	\node [block, rectangle, dotted] at (.5,4) (doc) {Document};
 	\node [draw, fill=red, rounded corners] at (1.25,4.75) {\tiny Methods};
 	\node [draw, fill=green, rounded corners] at (-.25,4.75) {\tiny Signals};
 
-	\node [block, circle] at (5,4) (root) {Object};
-	\node [draw, fill=red, rounded corners] at (5.75,5) {\tiny Methods};
-	\node [draw, fill=green, rounded corners] at (4.25,5) {\tiny Signals};
+	\node [block, circle] at (6,4) (root) {Object};
+	
 
 	\node [block] at (9,2) (material) {Material};
 	\node [block] at (9,4) (mesh) {Mesh};
@@ -180,22 +180,25 @@ For performance reasons, the \textit{in-situ} capabilities of the serialization 
 	\node [block] at (8.75,6) (light) {Light};
 	\node [block] at (9,6) (light) {Light};
 
-	\node [block, circle] at (4,0) (child0) {Child};
-	\node [block, circle] at (5,0) (child1) {Child};
-	\node [block, circle] at (6,0) (child2) {Child};
+	\node [block, circle] at (5.75,.5) (child0) {Child};
+	\node [block, circle] at (6,.5) (child1) {Child};
+	\node [block, circle] at (6.25,.5) (child2) {Child};
 
-	\node [block, diamond] at (.5,0) (table1) {Table};
-	\node [block, diamond] at (.75,0) (table2) {Table};
-	\node [block, diamond] at (1,0) (table3) {Table};
+	\node [block, diamond] at (2.0,1.0) (table1) {Table};
+	\node [block, diamond] at (2.25,1.0) (table2) {Table};
+	\node [block, diamond] at (2.5,1.0) (table3) {Table};
+	
+	\node [block, diamond] at (2.0,7.0) (plot1) {Plot};
+	\node [block, diamond] at (2.25,7.0) (plot2) {Plot};
+	\node [block, diamond] at (2.5,7.0) (plot3) {Plot};
 
 
-	\draw[->, thick](doc)--(root);
+	%\draw[->, thick](doc)--(root);
 
-	\draw[->, thick](root)--(table3);
+	\draw[->, dashed](root)--(table3);
+	\draw[->, dashed](root)--(plot3);
 
-	\draw[->, thick](root)--(child0);
 	\draw[->, thick](root)--(child1);
-	\draw[->, thick](root)--(child2);
 
 	\draw[->, thick](root)--(mesh);
 	\draw[->, thick](root)--(material);
@@ -206,10 +209,19 @@ For performance reasons, the \textit{in-situ} capabilities of the serialization 
 	\draw[->, thick](texture)--(buffer);
 	\draw[->, thick](mesh)--(buffer);
 
-	\draw[->, thick](doc)--(table1);
+	%\draw[->, thick](doc)--(table1);
+	%\draw[->, thick](doc)--(plot1);
 
-	\node [draw, fill=green, rounded corners] at (.25,1) {\tiny Signals};
-	\node [draw, fill=red, rounded corners] at (1.75,1) {\tiny Methods};
+	\node [draw, fill=green, rounded corners] at (1.75,2.0) {\tiny Signals};
+	\node [draw, fill=red, rounded corners] at (3.25,2.0) {\tiny Methods};
+
+	\node [draw, fill=green, rounded corners] at (1.75,8.0) {\tiny Signals};
+	\node [draw, fill=red, rounded corners] at (3.25,8.0) {\tiny Methods};
+	
+	\node [draw, fill=red, rounded corners] at (6.75,5) {\tiny Methods};
+	\node [draw, fill=green, rounded corners] at (5.25,5) {\tiny Signals};
+
+
 \end{tikzpicture}
 
 \caption{Document structure.}
@@ -219,6 +231,8 @@ For performance reasons, the \textit{in-situ} capabilities of the serialization 
 
 
 The objective of the system is to synchronize, as best as possible, the document between the client and the server. This is accomplished through the use of discrete messages.
+
+
 
 \subsection{Document}
 
@@ -240,6 +254,9 @@ Objects are mutable.
 
 \subsection{Tables}
 Tables are a structured way to transmit row oriented data. They consist of a header (list of column names), and rows. Attached signals and methods are used to allow clients to modify the data in the table or fetch records (but only when first subscribed to).
+
+\subsection{Plots}
+Plots are a way to transmit and possibly synchronize 2D plots. They consist of either a simple textual plot definition (described below), or a URL to load in a browser.
 
 \subsection{Signals and Methods}
 Signals are notifications from the server to the client. They may contain data, and may come from the document, objects, or tables.
@@ -296,7 +313,7 @@ This section discusses common elements to both the server and client message por
 \subsection{Any Type}
 The any type is the foundation value type. it is composed as follows:
 
-\lstinputlisting[language=flatbuffers, firstline=53, lastline=93, caption=Any Definition, label=listing:any]{"../interface/noodles.fbs"}
+\lstinputlisting[language=flatbuffers, firstline=58, lastline=98, caption=Any Definition, label=listing:any]{"../interface/noodles.fbs"}
 
 It is a discriminated union of text, integers, real, or bytes. It also contains a generic list, and string-keyed map. For efficiency, there is also a real-list and integer-list type which allow contiguous storage or access of those elements.
 
@@ -307,25 +324,24 @@ In method and signal API terms, real-lists and integer-lists are coerce-able. Th
 
 Here we discuss the messages that are sent from the server to the client.
 
-Almost all components have strict lifetimes defined by creation and deletion messages. Some messages are also used to update an existing component. Therefore, if a create-update message is received by the client for a component/entity of an ID that it has never seen before, that is the creation milestone. Otherwise, it is an update message. Update messages are treated differently; presence of a key in the update message table implies that the new value should overwrite a previously received value for that key.
-
+Almost all components have strict lifetimes defined by creation and deletion messages. Some messages are also used to update an existing component. Therefore, if a create-update message is received by the client for a component/entity of an ID that it has never seen before, that is the creation milestone. Otherwise, it is an update message. Update messages are treated with certain semantics: either an atomic or non-atomic updates. In non-atomic update, keys in the message add or replace keys in the destination. In an atomic update, the destination is completely replaced by the message.
 \subsection{Root Message}
 
 The server sends messages by the root type \texttt{ServerMessages}. This is an array of a union of creation/deletion messages.
 
-\lstinputlisting[language=flatbuffers, firstline=198, lastline=232, caption=Server Root Messages]{"../interface/noodles_server.fbs"}
+\lstinputlisting[language=flatbuffers, firstline=271, lastline=304, caption=Server Root Messages]{"../interface/noodles_server.fbs"}
 
 \subsection{Objects}
 
 Objects are created, updated and destroyed in Listing~\ref{listing:obj}. All coordinates are provided in the OpenGL right hand manner.
 
-\lstinputlisting[language=flatbuffers, firstline=42, lastline=68, caption=Object Messages, label=listing:obj]{"../interface/noodles_server.fbs"}
+\lstinputlisting[language=flatbuffers, firstline=42, lastline=99, caption=Object Messages, label=listing:obj]{"../interface/noodles_server.fbs"}
 
 Each element is optional, with the exception of the object id.
 
 If the object ID has not been seen before by the client, it is assumed to be a new object. If there is no transform in the message, it is assumed to be the identity.
 
-If the object ID has been seen before and not deleted, it should update the existing object with the elements that are provided in the message. For example, an message for Object ID 5 that contains a transform will only update object 5's transform, and not change other elements. In another example, to detach a material from an object, an update message with a null material ID is used.
+If the object ID has been seen before and not deleted, it should update the existing object with the elements that are provided in the message. For example, a message for Object ID 5 that contains a transform will only update object 5's transform, and not change other elements. In another example, to detach a material from an object, an update message with a null material ID is used.
 
 Instances of the underlying meshes are specified by a list of matrices, with a matrix per instance. Using column major ordering, Matrix~\ref{eqn.instances}, shows how position $p$, rotation $r$ (as a quaternion), color $c$, and scale $s$ are specified. Access is assumed to be by column, i.e.\ $M_0 = p$. Transforms should be applied in the following order: scaling, rotation, translation.
 
@@ -341,13 +357,14 @@ p_z & c_b & r_z & s_z \\
 \right)
 \end{equation}
 
-Text can be added to an object by means of the optional \texttt{TextDefinition} part of the message. Text is to be rendered how the client sees fit, with the orientation to be centered at the object, the text perpendicular to $+Z$ and up being $+Y$. The height of the text must be specified; the text will then automatically use the font information to compute the text width. If the optional width is specified, then the text shall, keeping the proper font aspect ratio, try to fill the bounds provided.
+Objects have a definition as to how they should be represented. By default, objects use the \texttt{EmptyDefinition}. Objects can also use a \texttt{TextDefinition}, which describes that the object should be rendered as a text annotation. Text is to be rendered how the client sees fit, with the orientation to be centered at the object, the text perpendicular to $+Z$ and up being $+Y$. The height of the text must be specified; the text will then automatically use the font information to compute the text width. If the optional width is specified, then the text shall, keeping the proper font aspect ratio, try to fill the bounds provided.
+For more general 2D content, \texttt{WebpageDefinition} can be used to declare that the object is a web page. \texttt{RenderableDefinition} is used to declare that the object is supposed to render 3D geometry, with optional instances.
 
 \subsection{Tables}
 
 Tables are created and destroyed in the following messages.
 
-\lstinputlisting[language=flatbuffers, firstline=155, lastline=165, caption=Table Messages, label=listing:tbl]{"../interface/noodles_server.fbs"}
+\lstinputlisting[language=flatbuffers, firstline=220, lastline=231, caption=Table Messages, label=listing:tbl]{"../interface/noodles_server.fbs"}
 
 Tables have names (which shall be unique), a metadata JSON string, methods, and signals.
 
@@ -355,7 +372,7 @@ Tables have names (which shall be unique), a metadata JSON string, methods, and 
 
 Buffers are created and destroyed in the following messages.
 
-\lstinputlisting[language=flatbuffers, firstline=72, lastline=84, caption=Buffer Messages, label=listing:buff]{"../interface/noodles_server.fbs"}
+\lstinputlisting[language=flatbuffers, firstline=131, lastline=143, caption=Buffer Messages, label=listing:buff]{"../interface/noodles_server.fbs"}
 
 Buffers are either inline (in the \texttt{bytes} field) or provided as a URL. If a URL is supplied the size of the buffer must be passed as well. If neither is supplied, the server has the data inline, but has deemed it too large to send immediately to avoid stalling clients. In this case, the server would do well to supply the data through another port and use the URL feature, but some servers are unable to do this. In this case, where both the bytes and URL feature are empty, the \texttt{url\_size} field must still be filled for client pre-allocation. At intervals, the client can send a refresh message to fill in the missing buffers to avoid burdening the websocket (see Section~\ref{sec:refresh_message} ).
 
@@ -363,7 +380,7 @@ Buffers are either inline (in the \texttt{bytes} field) or provided as a URL. If
 
 Geometries are created, and destroyed in the following messages.
 
-\lstinputlisting[language=flatbuffers, firstline=127, lastline=150, caption=Geometry Messages, label=listing:geom]{"../interface/noodles_server.fbs"}
+\lstinputlisting[language=flatbuffers, firstline=194, lastline=216, caption=Geometry Messages, label=listing:geom]{"../interface/noodles_server.fbs"}
 
 Limitations in Flatbuffer IDL require some notes here. Geometries are defined by ranges of a buffer for their components. These ranges, in the \texttt{ComponentRef} type, require a buffer, and also \textit{require} a start byte offset of the buffer, as well as a byte size field, and the byte stride between vertex elements.
 
@@ -377,15 +394,15 @@ Index elements are specified in \texttt{lines} and \texttt{triangles}. Only one 
 
 Textures are created, updated, and destroyed in the following messages.
 
-\lstinputlisting[language=flatbuffers, firstline=103, lastline=110, caption=Texture Messages, label=listing:tex]{"../interface/noodles_server.fbs"}
+\lstinputlisting[language=flatbuffers, firstline=163, lastline=171, caption=Texture Messages, label=listing:tex]{"../interface/noodles_server.fbs"}
 
-Textures, specify a buffer range for an image. For portability, these are to be in the on-disk format for PNG, JPG, or EXR. KTX is also allowed, but the user should be aware that not all clients can support it.
+Textures, specify a buffer range for an image. For portability, these are to be in the on-disk format for PNG, JPG, or EXR. KTX is also allowed, but the user should be aware that not all clients can support it. Textures shall be interpreted as in the OpenGL coordinate system
 
 \subsection{Material}
 
 Materials are created, updated, and destroyed in the following messages.
 
-\lstinputlisting[language=flatbuffers, firstline=88, lastline=99, caption=Material Messages, label=listing:mat]{"../interface/noodles_server.fbs"}
+\lstinputlisting[language=flatbuffers, firstline=147, lastline=159, caption=Material Messages, label=listing:mat]{"../interface/noodles_server.fbs"}
 
 The \texttt{color} key defines colors in the range of $0 - 1$ for $r,g,b,a$. Other PBR parameters are also in the $0 - 1$ range. The texture ID field is optional, and could also be null to indicate no texture.
 
@@ -395,9 +412,9 @@ Materials can be updated and are not immutable.
 
  Lights are created, updated, and destroyed in the following messages.
 
- \lstinputlisting[language=flatbuffers, firstline=114, lastline=123, caption=Light Messages, label=listing:light]{"../interface/noodles_server.fbs"}
+ \lstinputlisting[language=flatbuffers, firstline=175, lastline=190, caption=Light Messages, label=listing:light]{"../interface/noodles_server.fbs"}
 
- The \texttt{color} key defines colors in the range of $0 - 1$ for $r,g,b$. Intensity of the light is unbounded.
+ The \texttt{color} key defines colors in the range of $0 - 1$ for $r,g,b$. Intensity of the light is unbounded. Note that, for the moment, changing the light type after the initial creation message is not allowed.
 
 
 \subsection{Signals \& Methods}
@@ -414,13 +431,13 @@ Signal must be provided with a human friendly name, and also may not share the s
 
 Signals may be invoked on the client and client methods replied with the following messages.
 
-\lstinputlisting[language=flatbuffers, firstline=180, lastline=200, caption=Communication, label=listing:sig_meth_iv]{"../interface/noodles_server.fbs"}
+\lstinputlisting[language=flatbuffers, firstline=246, lastline=267, caption=Communication, label=listing:sig_meth_iv]{"../interface/noodles_server.fbs"}
 
-Either only \texttt{on\_object} or \texttt{on\_table} or neither must be set, to indicate context. Signals may NOT be invoked on a context that does not have them attached.
+Either only \texttt{on\_object} or \texttt{on\_table} or \texttt{on\_plot} or none must be set, to indicate context. Signals may NOT be invoked on a context that does not have them attached.
 
-Method replies must have a previously given method invocation identifier (see Section \ref{sec:method_invoke} ). If the method could not be executed, an exception field is filled instead of data. 
+Method replies must have a previously given method invocation identifier (see Section \ref{sec:method_invoke} ). If the method could not be executed, an exception field is filled instead of data.
 
-During an exception, the method should let the caller know what went wrong. A unique code for the error must be filled. A short message should be provided for users; additional data may also be provided for things like nested errors. Given the differences in clients, however, it is likely that such data would be flattened to a string.
+In an exception, the code should represent either one of the predefined error codes in Table~\ref{tab:error_codes}, or a code in the defined user-code region. A short message should be provided for users; additional data may also be provided for things like nested errors. Given the differences in clients, however, it is likely that such data would be flattened to a string.
 
 Reserved error codes are provided in Table~\ref{tab:error_codes} and are designed to match the XMLRPC and JSONRPC codes. Error codes $-32768$ to $-32000$ are reserved by the spec.
 
@@ -444,7 +461,7 @@ Reserved error codes are provided in Table~\ref{tab:error_codes} and are designe
 
 The document is implicit, and always exists. It can be modified with the following messages.
 
-\lstinputlisting[language=flatbuffers, firstline=169, lastline=177, caption=Document Messages, label=listing:doc_mess]{"../interface/noodles_server.fbs"}
+\lstinputlisting[language=flatbuffers, firstline=235, lastline=242, caption=Document Messages, label=listing:doc_mess]{"../interface/noodles_server.fbs"}
 
 The document may be updated with \texttt{DocumentUpdate}, to modify the current methods and signals. It may also be completely reset. The reset message, by quirk of Flatbuffers, may not be empty; ignore any fields within. When a document is reset, all components and objects are to be deleted at that point.
 
@@ -456,26 +473,26 @@ In this section we discuss the messages sent by a client.
 
 Client messages are defined as the following root type.
 
-\lstinputlisting[language=flatbuffers, firstline=29, lastline=43, caption=Client Message Root, label=listing:client_root]{"../interface/noodles_client.fbs"}
+\lstinputlisting[language=flatbuffers, firstline=31, lastline=45, caption=Client Message Root, label=listing:client_root]{"../interface/noodles_client.fbs"}
 
 \subsection{Introduction}
 
 The client introduces itself to the server with the following message.
 
-\lstinputlisting[language=flatbuffers, firstline=10, lastline=12, caption=Introduction Message, label=listing:intro]{"../interface/noodles_client.fbs"}
+\lstinputlisting[language=flatbuffers, firstline=10, lastline=13, caption=Introduction Message, label=listing:intro]{"../interface/noodles_client.fbs"}
 
-The name of the client must not be empty, and should identify a client; host names can be used.
+The name of the client must not be empty, and should identify a client; host names can be used. The version integer represents the major version of the specification that the client supports. Version 0 implies that the client is a pre-version-1 client.
 
 \subsection{Method Invocation}
 \label{sec:method_invoke}
 
 The client asks to invoke a method with the following message.
 
-\lstinputlisting[language=flatbuffers, firstline=14, lastline=23, caption=Method Invocation, label=listing:invoke]{"../interface/noodles_client.fbs"}
+\lstinputlisting[language=flatbuffers, firstline=15, lastline=25, caption=Method Invocation, label=listing:invoke]{"../interface/noodles_client.fbs"}
 
 The message must have an invocation identifier; the asynchronous reply will carry that identifier. Identifiers must not be reused.
 
-Either the \texttt{on\_object} or the \texttt{on\_table} or neither should be set, to indicate the context of the invocation: on an object, on a table, or on the document, respectively. The method can only be called on a context on which it is attached.
+Either the \texttt{on\_object} or the \texttt{on\_table} or \texttt{on\_plot} or none should be set, to indicate the context of the invocation: on an object, on a table, or on a plot or on the document, respectively. The method can only be called on a context on which it is attached.
 
 The arguments to the method must match the documented method signature.
 
@@ -484,7 +501,7 @@ The arguments to the method must match the documented method signature.
 
 The client may ask to receive missing buffer content with the following message.
 
-\lstinputlisting[language=flatbuffers, firstline=25, lastline=27, caption=Buffer Refresh, label=listing:buff_refresh]{"../interface/noodles_client.fbs"}
+\lstinputlisting[language=flatbuffers, firstline=27, lastline=29, caption=Buffer Refresh, label=listing:buff_refresh]{"../interface/noodles_client.fbs"}
 
 
 \section{Semantics}
@@ -492,9 +509,9 @@ The client may ask to receive missing buffer content with the following message.
 
 \subsection{Tables}
 
-Tables are a way of exposing record data to clients so that they can either provide an alternative representation of that data or to allow command line clients access to the data. An example of an alternative representation would be a 2D chart that could be provided for a lightweight 2D client instead of a 3D plot.
+Tables are a way of exposing record data to clients so that they can either provide an alternative representation of that data or to allow command line clients access to the data. An example of an alternative representation would be a 2D chart that could be provided for a lightweight 2D client instead of a 3D plot. Another approach would be to allow a visual representation to provide a link to details of a certain data point.
 
-Tables consist of columns (with unique names) and rows. Rows are identified by a \texttt{Key}, which is an integer. Keys are assumed to be monotonically increasing, that is, new insertions into the database are given a new key larger than any key seen before..
+Tables consist of columns (with unique names) and rows. Rows are identified by a \texttt{Key}, which is an integer. Keys are assumed to be monotonically increasing, starting from 0, that is, new insertions into the database are given a new key larger than any key seen before.
 
 Another useful abstraction is the \texttt{Row} type; a row is either an \texttt{AnyList} or a \texttt{RealList}. A \texttt{Column} is the same.
 
@@ -502,17 +519,17 @@ A commonly used notion is the concept of a selection within a table of data. Lis
 
 \begin{lstlisting}[language=json, label=listing:selection_object, caption=Selection object definition. Note that the \texttt{to} field in the row ranges is exclusive. The \texttt{row\_ranges} list \textit{must} have an even number of elements. ]
 {
-	"rows" : [Key, ...],
+	"rows" : [Key, ...], // must be an IntegerList
 	"row_ranges" : [
 	   Key from, Key to,
 	   ...
-	]
+	] // also must be represented as an IntegerList
 }
 \end{lstlisting}
 
 \subsubsection{Methods \& Signals}
 
-To query table information, signals and methods are used. These names are restricted and cannot be used by the user application. Note, indexes are all zero-based. Tables~\ref{tbl:table_methods} and~\ref{tbl:table_signals} list the data related methods and signals a table can support. The server should not send any data or signals to the client for a given table \emph{unless} a client has expressed interest by calling the subscribe method. This is to avoid stressing clients that have no table interface and to reduce unnecessary network traffic. Further it is up to the server to honor these methods; should the server not support modification, for example, requests will be dropped.
+To query table information, signals and methods are used. These names are restricted and cannot be used by the user application. Note, indexes are all zero-based. Tables~\ref{tbl:table_methods} and~\ref{tbl:table_signals} list the data related methods and signals a table can support. The server should not send any data or signals to the client for a given table \emph{unless} a client has expressed interest by calling the subscribe method. This is to avoid stressing clients that have no table interface and to reduce unnecessary network traffic. Further it is up to the server to honor these methods; should the server not support modification, for example, requests will return an exception.
 
 \begin{table}
 	\begin{tabularx}{.9\textwidth}{p{2.5in}X}
@@ -580,8 +597,8 @@ To query table information, signals and methods are used. These names are restri
 
 \begin{lstlisting}[language=json]
 TblInit : {
-	"columns" : [ string ], //1
-    "keys" : [ Key ], //2
+	"columns" : [ string ], // 1
+    "keys" : [ Key ], // 2
 	"data" : [ Column ], // 2
 	"selections" : [ [string, SelectionObject] ] // 3
 }
@@ -591,7 +608,7 @@ Part 1 is a list of columns. This establishes a column order that is used to int
 
 \paragraph{\textbf{Reset}} Should the server issue the \texttt{tbl\_reset} signal, this would imply that the table has been reset, with no data, and no selections, but with the same header.
 
-\paragraph{\textbf{Insertion}} Data may be inserted into the table through both the row and many versions of the call. Note that the key cannot be specified, thus the row length should be for all the other columns, in column order. The many version simply takes a list of rows to be inserted. Insertion success is demonstrated through reception of the \texttt{rows\_inserted} signal; this signal provides the data inserted along with the keys that were assigned to that row, i.e. the full row of data for all columns.
+\paragraph{\textbf{Insertion}} Data may be inserted into the table through both the row and many versions of the call. Note the key cannot be specified. The row length should be equal to the length of the header, and supplied in header order. The many version simply takes a list of rows to be inserted. Insertion success is demonstrated through reception of the \texttt{rows\_inserted} signal; this signal provides the data inserted along with the keys that were assigned to that row, i.e. the full row of data for all columns.
 
 \paragraph{\textbf{Update}} Data can be updated through both the row and many versions. In this case, as opposed to the insertion functions, the full row, including the key column, is specified in column order, so that the correct row may be updated. Success is indicated through the corresponding update signal.
 
@@ -617,48 +634,41 @@ This mirrors the update call, and denotes which selection has changed, and what 
 
 Tables are also capable of synchronizing metadata for other purposes. This is exposed as a JSON object.
 
-\paragraph{2D Plot Sync:} To facilitate 2D plot synchronization, multiple optional mechanisms are present. The first provides a simple approach:
+\subsection{Plots}
+
+To facilitate 2D plot synchronization, multiple optional mechanisms are present. Plots expose a simple definition system, and a URL system. 
+
+\subsubsection{Simple}
+
+In the \texttt{SimplePlot} object, there is a single member \texttt{definition}. This is a JSON encoded object, containing one of several formats.
+
+The first format provides a simple encoded approach:
 
 \begin{lstlisting}[language=json, label=listing:simple_sync_meta, caption=Table Metadata for Plot Sync ]
-Meta : {
-	"simple_plots" : [ SimplePlotInfo ] ,
+definition : {
+	"simple_plot" : SimplePlotInfo ,
 	<other keys>
 }
 
 SimplePlotInfo : {
 	"plot_name" : "name",
-	"column_name" : ColumnInfo,
-	...
+	"columns" : [ ColumnInfo ]
 }
 
 ColumnInfo : {
+	"column_name" : "<name>",
 	"prefers" : "x" | "y",
 	"color" : "#rrggbb",
 	"range" : [from, to]
 }
 \end{lstlisting}
 
-In Listing~\ref{listing:simple_sync_meta}, the metadata object will contain a key called \texttt{simple\_plots}. This key is a listing of named plots; each plot describes how each column of the table should be treated in an arbitrary simple plot.
+In Listing~\ref{listing:simple_sync_meta}, the definition JSON will contain a key called \texttt{simple\_plot}. This key is a listing of named plots; each plot describes how each column of the table should be treated in an arbitrary simple plot.
 
 \paragraph{Complex 2D Plot Sync:} More advanced plotting facilities are forthcoming, but planned to follow a system like:
 \url{http://docs.juliaplots.org/latest/attributes/}.
 
-\paragraph{Direct Interface:} Metadata may expose a \texttt{uri} field for direct database access. This is an object that contains information on how to connect.
-
-\begin{lstlisting}[language=json, label=listing:simple_db_meta, caption=Table URI Field ]
-	Meta : {
-		"uri" : URI_Info ,
-		<other keys>
-	}
-
-	URI_Info : {
-		"address" : "ip",
-		"port" : number,
-		"type" : string
-	}
-
-\end{lstlisting}
-
+\paragraph{Web} Another option is to directly expose a URL for web access. This allows for complex server-based or other peer to peer 2D synchronization tools.
 
 \subsection{Objects}
 \label{sec:obj_cap}
