@@ -140,3 +140,9 @@ table BufferRef {
     start : uint64;
     size  : uint64;
 }
+
+struct RGB {
+    r : uint8;
+    g : uint8;
+    b : uint8;
+}

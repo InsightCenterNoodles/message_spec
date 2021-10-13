@@ -174,17 +174,17 @@ table TextureDelete {
 
 enum LightType : byte {
     POINT = 0,
-    SUN,
+    SUN, //Direct light along +Z
 }
 
 // non-atomic update semantics
 table LightCreateUpdate {
     id         : LightID (required);
-    color      : Vec3;
+    color      : RGB;
     intensity  : float;
+    spatial    : Vec4;
     light_type : LightType; // after being set once, updates ignored
 }
-
 table LightDelete {
     id        : LightID (required);
 }
