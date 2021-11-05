@@ -10,53 +10,53 @@ namespace noodles;
 // Identifiers are tables, due to poor language support for structs.
 
 table ObjectID {
-    id_slot : uint32;
-    id_gen  : uint32;
+    id_slot : uint32 = 4294967295;
+    id_gen  : uint32 = 4294967295;
 }
 
 table PlotID {
-    id_slot : uint32;
-    id_gen  : uint32;
+    id_slot : uint32 = 4294967295;
+    id_gen  : uint32 = 4294967295;
 }
 
 table TableID {
-    id_slot : uint32;
-    id_gen  : uint32;
+    id_slot : uint32 = 4294967295;
+    id_gen  : uint32 = 4294967295;
 }
 
 table SignalID {
-    id_slot : uint32;
-    id_gen  : uint32;
+    id_slot : uint32 = 4294967295;
+    id_gen  : uint32 = 4294967295;
 }
 
 table MethodID {
-    id_slot : uint32;
-    id_gen  : uint32;
+    id_slot : uint32 = 4294967295;
+    id_gen  : uint32 = 4294967295;
 }
 
 table MaterialID {
-    id_slot : uint32;
-    id_gen  : uint32;
+    id_slot : uint32 = 4294967295;
+    id_gen  : uint32 = 4294967295;
 }
 
 table GeometryID {
-    id_slot : uint32;
-    id_gen  : uint32;
+    id_slot : uint32 = 4294967295;
+    id_gen  : uint32 = 4294967295;
 }
 
 table LightID {
-    id_slot : uint32;
-    id_gen  : uint32;
+    id_slot : uint32 = 4294967295;
+    id_gen  : uint32 = 4294967295;
 }
 
 table TextureID {
-    id_slot : uint32;
-    id_gen  : uint32;
+    id_slot : uint32 = 4294967295;
+    id_gen  : uint32 = 4294967295;
 }
 
 table BufferID {
-    id_slot : uint32;
-    id_gen  : uint32;
+    id_slot : uint32 = 4294967295;
+    id_gen  : uint32 = 4294967295;
 }
 
 union AnyIDType {
