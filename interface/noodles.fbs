@@ -3,6 +3,22 @@
 
 namespace noodles;
 
+
+/*
+
+Update semantics:
+Unless otherwise specified, updates are value-like atomic. That is, the client
+should reconstruct the local representation of the entity. This is opposed to a
+non-atomic delta-like update; where only mentioned fields in the table should
+be updated in the local representation.
+
+Coordinate system semantics:
+We follow the OpenGL style for coordinates and orientations (right handed).
+Units are in SI.
+- Lengths are in meters.
+
+*/
+
 // =============================================================================
 // Common Types ================================================================
 // =============================================================================
@@ -49,12 +65,22 @@ table LightID {
     id_gen  : uint32 = 4294967295;
 }
 
+table ImageID {
+    id_slot : uint32 = 4294967295;
+    id_gen  : uint32 = 4294967295;
+}
+
 table TextureID {
     id_slot : uint32 = 4294967295;
     id_gen  : uint32 = 4294967295;
 }
 
 table BufferID {
+    id_slot : uint32 = 4294967295;
+    id_gen  : uint32 = 4294967295;
+}
+
+table BufferViewID {
     id_slot : uint32 = 4294967295;
     id_gen  : uint32 = 4294967295;
 }
@@ -67,8 +93,10 @@ union AnyIDType {
     MaterialID,
     GeometryID,
     LightID,
+    ImageID,
     TextureID,
     BufferID,
+    BufferViewID,
     PlotID
 }
 
@@ -106,6 +134,23 @@ table Any {
     any : AnyType;
 }
 
+enum Format : byte {
+    U8,
+    U16,
+    U32,
+
+    U8VEC4,
+
+    U16VEC2,
+
+    VEC2,
+    VEC3,
+    VEC4,
+
+    MAT3,
+    MAT4,
+}
+
 // Misc Types ==================================================================
 
 struct Vec2 {
@@ -127,7 +172,7 @@ struct Vec4 {
 }
 
 struct Mat4 {
-    // for javascript compat, we have to expand this.
+    // for javascript compat, we have to expand the below:
     // components : [float : 16];
     c1 : Vec4;
     c2 : Vec4;
@@ -140,16 +185,17 @@ struct BoundingBox {
     aabb_max : Vec3;
 }
 
-table BufferRef {
-    id    : BufferID;
-    start : uint64;
-    size  : uint64;
-}
-
 struct RGB {
     r : uint8;
     g : uint8;
     b : uint8;
+}
+
+struct RGBA {
+    r : uint8;
+    g : uint8;
+    b : uint8;
+    a : uint8;
 }
 
 // =============================================================================
@@ -157,61 +203,79 @@ struct RGB {
 // =============================================================================
 
 table MethodArg {
-    name : string;
+    // What is the name for this method argument?
+    name : string (required);
+
+    // Documentation for users; what does this argument do?
     doc  : string;
+
+    // Optional hint of the type of this argument
+    // Any value in AnyType (as text) is valid.
     hint : string;
-}
-table MethodCreate {
-    id            : MethodID (required);
-    name          : string;
-    documentation : string;
-    return_doc    : string;
-    arg_doc       : [ MethodArg ];
+
+    // Optional Control hint for gui editors.
+    // Currently known values
+    // - 'EditCheckbox'
+    // - 'EditSlider:min:max'
+    editor_hint : string;
 }
 
+// Create a new method
+table MethodCreate {
+    id            : MethodID (required); // The new method's ID
+    name          : string (required);   // Non-unique name of method
+    documentation : string;              // Optional docstring for method
+    return_doc    : string;              // Optional return value documentation
+    arg_doc       : [ MethodArg ];       // Arguments to method
+}
+
+// Destroy a method
 table MethodDelete {
     id            : MethodID (required);
 }
 
 // =============================================================================
 
+// Create a new signal
 table SignalCreate {
-    id             : SignalID (required);
-    name           : string;
-    documentation  : string;
-    arg_doc        : [ MethodArg ];
+    id             : SignalID (required); // The new signal's ID
+    name           : string (required);   // Non-unique name of signal
+    documentation  : string;              // Optional signal docstring
+    arg_doc        : [ MethodArg ];       // Data provided with signal
 }
 
+// Delete a signal
 table SignalDelete {
     id             : SignalID (required);
 }
 
 // =============================================================================
 
+// The 'has no visual representation' type
 table EmptyDefinition {
     padding : bool = false; // cannot be empty
 }
 
-// atomic update semantics
-table TextDefinition { // Text plane, normal +z, up is +y, center: obj origin
+// Render this object as text
+table TextDefinition { // Text plane, normal -z, up is +y, center: obj origin
     text   : string (required); // String to render
     font   : string (required); // Approximate font to use (e.g. Arial)
     height : float = .25; // The height of the text plane.
     width  : float = -1; // Optional width of text, infer from height if < 0
 }
 
-// atomic update semantics
+// Render this object as a web page
 table WebpageDefinition {
     url    : string (required);
     height : float = .5;
     width  : float = .5;
 }
 
-// atomic update semantics
+// Render this object as a mesh
 table RenderableDefinition {
     material    : MaterialID (required);
-    mesh        : GeometryID (required);
-    instances   : [Mat4]; // optional
+    mesh        : [GeometryID] (required);
+    instances   : StructuredAttribute; // optional, only mat4 allowed
     instance_bb : BoundingBox; // optional override for instanced object culling
 }
 
@@ -226,7 +290,8 @@ struct ObjectVisibility {
     visible : bool;
 }
 
-// nonatomic update semantics
+// Create or update an object.
+// Non-atomic update semantics
 table ObjectCreateUpdate {
     id           : ObjectID (required);
     name         : string;
@@ -279,12 +344,13 @@ table PlotDelete {
 
 table BufferCreate {
     id       : BufferID (required);
-    bytes    : [byte]; // This could be empty
-    url      : string; // This could be empty too
     size     : uint64; // Size of buffer
 
-    // If both are empty, data is coming, just hang on for another message of
-    // this kind with the bytes. you may have to request a refresh message
+    // where does the data come from?
+    // one option is inline
+    bytes    : [byte]; // limited in size.
+    // or
+    url      : string; // url to download data from 
 }
 
 table BufferDelete {
@@ -293,14 +359,63 @@ table BufferDelete {
 
 // =============================================================================
 
+enum ViewType {
+    UNKNOWN,
+    VERTEX_INFO,
+    INDEX_INFO,
+    IMAGE_INFO,
+}
+
+table BufferViewCreate {
+    id            : BufferViewID (required);
+    source_buffer : BufferID (required);
+
+    type   : ViewType (required);
+    offset : uint64 = 0;
+    length : uint64 = 0;
+}
+
+table BufferViewDelete {
+    id    : BufferID (required);
+}
+
+// =============================================================================
+
+// Textures may be assumed to be in SRGB. If so, they must be decoded to linear
+// before use in shaders, etc.
+
+table TextureRef {
+    texture_id         : TextureID;
+    texture_coord_slot : uint8;
+    transform          : Mat3;
+}
+
+table PBRInfo {
+    base_color          : RGBA; // default is 255 for all channels.
+    base_color_texture  : TextureRef; // assumed to be SRGB. no premult alpha
+
+    metallic            : float = 1;
+    roughness           : float = 1;
+    metal_rough_texture : TextureRef; // assumed to be linear. ONLY RG used
+}
+
 // non-atomic update semantics
 table MaterialCreateUpdate {
     id           : MaterialID (required);
-    color        : Vec4;
-    metallic     : float;
-    roughness    : float;
-    use_blending : bool;
-    texture_id   : TextureID;
+
+    pbrInfo        : PBRInfo; // if missing, assume defaults.
+    normal_texture : TextureRef;
+
+    occlusion_texture        : TextureRef; // assumed to be linear. ONLY R
+    occlusion_texture_factor : float = 1;
+
+    emissive_texture : TextureRef; // assumed to be SRGB. ignore A.
+    emissive_factor  : Vec3;
+
+    use_alpha    : bool  = false;
+    alpha_cutoff : float = .5;
+
+    double_sided : bool = false;
 }
 
 table MaterialDelete {
@@ -309,10 +424,28 @@ table MaterialDelete {
 
 // =============================================================================
 
-// non-atomic update semantics
-table TextureCreateUpdate {
-    id        : TextureID (required);
-    reference : BufferRef (required);
+table ImageCreate {
+    id       : ImageID (required);
+
+    // color space information must be ignored
+
+    // either
+    reference : BufferViewID;
+    // or
+    url : string;
+}
+
+table ImageDelete {
+    id        : ImageID (required);
+}
+
+// =============================================================================
+
+table TextureCreate {
+    id    : TextureID (required);
+    image : ImageID (required);
+
+    // need samplers?
 }
 
 table TextureDelete {
@@ -340,24 +473,43 @@ table LightDelete {
 
 // =============================================================================
 
-table ComponentRef { // All elements required, but not expressable in this spec
-    id     : BufferID (required);
-    start  : uint64;
-    size   : uint64;
-    stride : uint64;
+struct StructuredAttribute { 
+    // All elements required, but not expressable in this spec
+    id     : BufferViewID (required);
+    stride : uint64 = 0;
+    format : Format;
+}
+
+enum PrimitiveType : byte {
+    POINTS,
+    LINES,
+    LINE_LOOP,
+    LINE_STRIP,
+    TRIANGLES,
+    TRIANGLE_STRIP,
+    TRIANGLE_FAN
+}
+
+table GeometryPatch {
+    // renderable extent of this geometry patch
+    extent : BoundingBox;
+
+    positions  : StructuredAttribute; // at the moment, should only be vec3
+    normals    : StructuredAttribute; // at the moment, should only be vec3
+    tangent    : StructuredAttribute; // at the moment, should only be vec3
+    tex_coords : StructuredAttribute; // vec2, u16vec2
+    colors     : StructuredAttribute; // u8vec4
+
+    // optional, if missing, non-indexed primitives only
+    indicies   : StructuredAttribute; // u8, u16, u32
+
+    type : PrimitiveType = PrimitiveType::TRIANGLES;
 }
 
 table GeometryCreate {
-    id         : GeometryID (required);
+    id : GeometryID (required); // id of the new geometry
 
-    extent : BoundingBox;
-
-    positions  : ComponentRef; // Vec3
-    normals    : ComponentRef; // Vec3
-    tex_coords : ComponentRef; // Vec2
-    colors     : ComponentRef; // U8Vec4
-    lines      : ComponentRef; // U16Vec2
-    triangles  : ComponentRef; // U16Vec3
+    patches : [ GeometryPatch ];    
 }
 
 table GeometryDelete {
@@ -426,10 +578,14 @@ union ServerMessageType {
     ObjectDelete,
     BufferCreate,
     BufferDelete,
+    BufferViewCreate,
+    BufferViewDelete,
     MaterialCreateUpdate,
     MaterialDelete,
-    TextureCreateUpdate,
+    TextureCreate,
     TextureDelete,
+    ImageCreate,
+    ImageDelete,
     LightCreateUpdate,
     LightDelete,
     GeometryCreate,
