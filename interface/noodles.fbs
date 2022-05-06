@@ -134,6 +134,24 @@ table RealList { reals : [double]; }
 table Data { data : [byte]; }
 table AnyList { list : [Any]; }
 table AnyMap { entries : [MapEntry]; }
+// due to a limitation of FB, we can't have structs in a union. Therefore...
+table AVec2 {
+    x : float;
+    y : float;
+}
+
+table AVec3 {
+    x : float;
+    y : float;
+    z : float;
+}
+
+table AVec4 {
+    x : float;
+    y : float;
+    z : float;
+    w : float;
+}
 
 union AnyType {
     Text,
@@ -145,12 +163,9 @@ union AnyType {
     AnyList,
     AnyMap,
     AnyID,
-    Vec2,
-    Vec3,
-    Vec4,
-    Mat3,
-    Mat4,
-    RGBA,
+    AVec2,
+    AVec3,
+    AVec4,
 }
 
 table Any {
@@ -308,11 +323,18 @@ table WebpageDefinition {
     width  : float = .5;        // the physical width of the page
 }
 
+table InstanceSemantic {
+    view     : BufferViewID;
+    // bytes between instance matrices. For best performance, there should be
+    // no padding.
+    stride : uint64 = 0; 
+}
+
 // Render this entity as a mesh
 table RenderableDefinition {
     material    : MaterialID (required);
     mesh        : [GeometryID] (required);
-    instances   : StructuredAttribute; // optional, only mat4 allowed
+    instances   : InstanceSemantic; // optional
     instance_bb : BoundingBox; // optional override for instanced object culling
 }
 
@@ -572,6 +594,9 @@ table SamplerDelete {
 
 // =============================================================================
 
+// Lights are defined to mirror the GLTF punctual light extension
+
+// A point light source
 table PointLight {
     range : float = -1;
 }
@@ -611,14 +636,7 @@ table LightDelete {
 
 // =============================================================================
 
-// Interpret a view as a strided pack of vector or matrix elements
-table StructuredAttribute { 
-    // All elements required, but not expressable in this spec
-    id     : BufferViewID (required);
-    stride : uint64 = 0;
-    format : Format;
-}
-
+// Renderable primitive types
 enum PrimitiveType : byte {
     POINTS,
     LINES,
@@ -626,23 +644,56 @@ enum PrimitiveType : byte {
     LINE_STRIP,
     TRIANGLES,
     TRIANGLE_STRIP,
-    TRIANGLE_FAN
+    TRIANGLE_FAN // Not recommended, some hardware support is lacking
+}
+
+enum AttributeSemantic : byte {
+    POSITION, // for the moment, must be a vec3.
+    NORMAL,   // for the moment, must be a vec3.
+    TANGENT,  // for the moment, must be a vec3.
+    TEXTURE,  // for the moment, is either a vec2, or normalized u16vec2
+    COLOR,    // normalized u8vec4, or vec4
+}
+
+// Interpret a buffer view as a strided pack of vector or matrix elements
+table Attribute {
+    view     : BufferViewID;
+    semantic : AttributeSemantic;
+    
+    // some semantics may have a channel; there could be multiple of these
+    // attributes for this mesh. For now
+    //  textures and colors.
+    // may have extra channels. Implementations need not support more than 1
+    channel  : byte;      
+
+    stride   : uint64 = 0; // bytes between elements
+    format   : Format;     // format of the element
+
+    minimum_value : Vec4; // optional bounds for this attribute
+    maximum_value : Vec4; // optional bounds for this attribute
+
+    // are the elements normalized?
+    // for example a normalized U8: 0 -> 0, 255 -> 1.
+    normalized : bool = false; 
+}
+
+table IndexSemantic {
+    view     : BufferViewID;
+    // bytes between indicies. for performance, recommend all indicies be 
+    // tightly packed, with no padding.
+    stride : uint64 = 0; 
+    format : Format;     // format of the indicies, u8, u16, u32
 }
 
 table GeometryPatch {
-    // renderable extent of this geometry patch
-    extent : BoundingBox;
-
-    positions  : StructuredAttribute; // at the moment, should only be vec3
-    normals    : StructuredAttribute; // at the moment, should only be vec3
-    tangent    : StructuredAttribute; // at the moment, should only be vec3
-    tex_coords : StructuredAttribute; // vec2, u16vec2
-    colors     : StructuredAttribute; // u8vec4
+    attributes : [Attribute];
 
     // optional, if missing, non-indexed primitives only
-    indicies   : StructuredAttribute; // u8, u16, u32
+    indicies   : IndexSemantic; // u8, u16, u32
 
     type : PrimitiveType = TRIANGLES;
+
+    material : MaterialID; // Material to use for rendering this patch
 }
 
 table GeometryCreate {
@@ -659,49 +710,60 @@ table GeometryDelete {
 
 // non-atomic update semantics
 table TableCreateUpdate {
+    // ID of the new table to create
     id           : TableID (required);
-    name         : string;
-    meta         : string;
-    methods_list : [ MethodID ];
-    signals_list : [ SignalID ];
+    name         : string; // name of the table
+    meta         : string; // application defined metadata
+    methods_list : [ MethodID ]; // methods attached
+    signals_list : [ SignalID ]; // signals attached
 }
 
 table TableDelete {
-    id      : TableID (required);
+    id : TableID (required);
 }
 
 // =============================================================================
 
+// Update the core document properties
+// non-atomic update semantics
 table DocumentUpdate {
     methods_list  : [ MethodID ];
     signals_list  : [ SignalID ];
 }
 
+// Ask to reset the document. All entities, objects, tables, etc, are now 
+// invalid.
 table DocumentReset {
     padding : bool; // these things cannot be empty, so...
 }
 
 // =============================================================================
 
+// Clients should invoke the given signal on the given context
 table SignalInvoke {
+    // ID of signal to invoke
     id  : SignalID (required);
 
-    // if not set, it is on the document
-    on_object : InvokeIDType;
+    // if not set, the context is on the document
+    context : InvokeIDType;
 
+    // Arguments to the signal
     signal_data  : AnyList;
 }
 
+// Information about method exceptions
+// This is modelled after JSONRPC error handling and exceptions.
 table MethodException {
-    code    : int64;  // required
+    code    : int64;  // required (but not expressable in fbs)
     message : string; // optional
     data    : Any;    // optional
 }
 
+// A reply to a method invocation.
 table MethodReply {
-    invoke_ident     : string (required);
-    method_data      : Any;             // optional
-    method_exception : MethodException; // optional
+    invoke_ident     : string (required); // the client provided invoke ident
+    method_data      : Any;             // optional, method return value
+    method_exception : MethodException; // optional, possible exception
 }
 
 // =============================================================================
@@ -741,7 +803,7 @@ table ServerMessage {
     message : ServerMessageType;
 }
 
-// Root type for server messages
+// Root type for server messages. This is the only type that is to be sent from // the server.
 table ServerMessages {
     messages : [ ServerMessage ];
 }
@@ -750,17 +812,26 @@ table ServerMessages {
 // Client Messages =============================================================
 // =============================================================================
 
+// Introduction of the client to the server, must be the first message sent by 
+// the client, and the server will not respond until it gets such a message
 table IntroductionMessage {
-    client_name : string (required);
+    client_name : string (required); // A human-friendly name of the client
 }
 
+// Client asks to invoke a method or function, i.e. RPC
 table MethodInvokeMessage {
     method_id : MethodID (required);
 
-    // if not set, it is on the document
-    on_object : InvokeIDType;
+    // Context, or which thing should this method be invoked on
+    // If not set, it is on the document
+    context : InvokeIDType;
 
+    // An optional, client created identifier for this invocation request.
+    // If blank, the server will not send any response, i.e. fire and forget 
+    //semantics.
     invoke_ident : string;
+
+    // Arguments for this method.
     method_args  : AnyList;
 }
 
@@ -773,7 +844,8 @@ table ClientMessage {
     content : ClientMessageType (required);
 }
 
-// Root type for client messages
+// Root type for client messages, this is the type that must be sent from 
+// clients.
 table ClientMessages {
     messages : [ ClientMessage ] (required);
 }
