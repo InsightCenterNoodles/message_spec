@@ -7,14 +7,18 @@ namespace noodles;
 /*
 
 Update semantics:
-Unless otherwise specified, updates are value-like atomic. That is, the client
-should reconstruct the local representation of the entity. This is opposed to a
-non-atomic delta-like update; where only mentioned fields in the table should
-be updated in the local representation.
+- Some objects can be updated, some cannot. 
+- Unless otherwise specified, updates are value-like atomic. That is, the 
+  client should reconstruct the local representation of the entity. This is
+  opposed to a non-atomic delta-like update; where only mentioned fields in the 
+  table should be updated in the local representation. Note that in non-atomic 
+  mode, updates cannot (of course) change the ID of the object. However, 
+  updates to the "name" field is to be ignored on the client, and not done by 
+  the server.
 
 Coordinate system semantics:
-We follow the OpenGL style for coordinates and orientations (right handed).
-Units are in SI.
+- We follow the GLTF style for coordinates and orientations (right handed).
+- Units are in SI.
 - Lengths are in meters.
 
 */
@@ -23,9 +27,10 @@ Units are in SI.
 // Common Types ================================================================
 // =============================================================================
 
+// This API is defined around handles to things.
 // Identifiers are tables, due to poor language support for structs.
-
-table ObjectID {
+// If any of the slot or gen fields are maximum, then the handle is null.
+table EntityID {
     id_slot : uint32 = 4294967295;
     id_gen  : uint32 = 4294967295;
 }
@@ -75,6 +80,11 @@ table TextureID {
     id_gen  : uint32 = 4294967295;
 }
 
+table SamplerID {
+    id_slot : uint32 = 4294967295;
+    id_gen  : uint32 = 4294967295;
+}
+
 table BufferID {
     id_slot : uint32 = 4294967295;
     id_gen  : uint32 = 4294967295;
@@ -86,7 +96,7 @@ table BufferViewID {
 }
 
 union AnyIDType {
-    ObjectID,
+    EntityID,
     TableID,
     SignalID,
     MethodID,
@@ -95,8 +105,15 @@ union AnyIDType {
     LightID,
     ImageID,
     TextureID,
+    SamplerID,
     BufferID,
     BufferViewID,
+    PlotID
+}
+
+union InvokeIDType {
+    EntityID,
+    TableID,
     PlotID
 }
 
@@ -127,7 +144,13 @@ union AnyType {
     Data,
     AnyList,
     AnyMap,
-    AnyID
+    AnyID,
+    Vec2,
+    Vec3,
+    Vec4,
+    Mat3,
+    Mat4,
+    RGBA,
 }
 
 table Any {
@@ -169,6 +192,14 @@ struct Vec4 {
     y : float;
     z : float;
     w : float;
+}
+
+struct Mat3 {
+    // for javascript compat, we have to expand the below:
+    // components : [float : 9];
+    c1 : Vec3;
+    c2 : Vec3;
+    c3 : Vec3;
 }
 
 struct Mat4 {
@@ -216,12 +247,15 @@ table MethodArg {
     // Optional Control hint for gui editors.
     // Currently known values
     // - 'EditCheckbox'
-    // - 'EditSlider:min:max'
+    // - 'EditSlider:min:max:step'
     editor_hint : string;
 }
 
 // Create a new method
 table MethodCreate {
+    // Depending on the application, multiple methods might have the same name
+    // This can cause some confusion; avoid it by prefixes, etc.
+
     id            : MethodID (required); // The new method's ID
     name          : string (required);   // Non-unique name of method
     documentation : string;              // Optional docstring for method
@@ -231,7 +265,7 @@ table MethodCreate {
 
 // Destroy a method
 table MethodDelete {
-    id            : MethodID (required);
+    id : MethodID (required);
 }
 
 // =============================================================================
@@ -246,17 +280,19 @@ table SignalCreate {
 
 // Delete a signal
 table SignalDelete {
-    id             : SignalID (required);
+    id : SignalID (required);
 }
 
 // =============================================================================
 
 // The 'has no visual representation' type
 table EmptyDefinition {
-    padding : bool = false; // cannot be empty
+    // Tables cannot be empty, which breaks the variant model.
+    // In any case, this field is completely ignored.
+    padding : bool = false; 
 }
 
-// Render this object as text
+// Render this entity as text
 table TextDefinition { // Text plane, normal -z, up is +y, center: obj origin
     text   : string (required); // String to render
     font   : string (required); // Approximate font to use (e.g. Arial)
@@ -264,14 +300,15 @@ table TextDefinition { // Text plane, normal -z, up is +y, center: obj origin
     width  : float = -1; // Optional width of text, infer from height if < 0
 }
 
-// Render this object as a web page
+// Render this entity as a web page. This is done by defining a plane on which
+// to paint the page
 table WebpageDefinition {
-    url    : string (required);
-    height : float = .5;
-    width  : float = .5;
+    url    : string (required); // Where should we fetch the page?
+    height : float = .5;        // the physical height of the page 'plane'
+    width  : float = .5;        // the physical width of the page
 }
 
-// Render this object as a mesh
+// Render this entity as a mesh
 table RenderableDefinition {
     material    : MaterialID (required);
     mesh        : [GeometryID] (required);
@@ -279,46 +316,58 @@ table RenderableDefinition {
     instance_bb : BoundingBox; // optional override for instanced object culling
 }
 
-union ObjectDefinition {
+union Representation {
     EmptyDefinition,
     TextDefinition,
     WebpageDefinition,
     RenderableDefinition
 }
 
-struct ObjectVisibility {
-    visible : bool;
+struct EntityVisibility {
+    // Should this entity even be visible? By default all renderable items are
+    // visible, but there are times when you want to switch something off
+    // temporarily
+    visible : bool;  
 }
 
-// Create or update an object.
+// Create or update an entity.
 // Non-atomic update semantics
-table ObjectCreateUpdate {
-    id           : ObjectID (required);
-    name         : string;
-    parent       : ObjectID;
-    transform    : Mat4;
-    definition   : ObjectDefinition;
-    lights       : [LightID];
-    tables       : [TableID];
-    plots        : [PlotID];
-    tags         : [string];
-    methods_list : [MethodID];
-    signals_list : [SignalID]; // Dont use "signals" to avoid Qt conflict.
-    influence    : BoundingBox;
-    visibility   : ObjectVisibility;
+table EntityCreateUpdate {
+    // either the new id of the entity or the entity to update
+    id        : EntityID (required); 
+    name      : string;   // optional name of this entity
+    parent    : EntityID; // optional parent of this entity. DO NOT CREATE LOOPS
+    transform : Mat4;     // optional transform; if missing, assume identity
+
+    representation : Representation; // optional drawable representation
+
+    lights       : [LightID]; // optional lights attached
+    tables       : [TableID]; // optional tables attached
+    plots        : [PlotID];  // optional plots attached
+    tags         : [string];  // optional tags
+    methods_list : [MethodID]; // optional attached methods
+    signals_list : [SignalID]; // " " signals. avoid "signals" for Qt.
+
+    // optional region of influence, for interaction; edge case for when a 
+    // user is clicking empty space, but you want this entity to catch it.
+    influence : BoundingBox; 
+
+    visibility : EntityVisibility; // optional visibility
 }
 
-table ObjectDelete {
-    id        : ObjectID (required);
+table EntityDelete {
+    id : EntityID (required);
 }
 
 // =============================================================================
 
 table SimplePlot {
+    // this plot uses a simple language. TBD
     definition : string (required);
 }
 
 table URLPlot {
+    // this plot is defined as a webpage. 
     url : string (required);
 }
 
@@ -329,28 +378,43 @@ union PlotType {
 
 // non-atomic update semantics
 table PlotCreateUpdate {
+    // ID of the plot to either create or update
     id           : PlotID (required);
-    table        : TableID;
-    type         : PlotType;
-    methods_list : [MethodID];
-    signals_list : [SignalID];
+    name         : string;   // optional name of the plot
+    table_ref    : TableID;  // optional link to a table of data
+    type         : PlotType (required); // type of this plot
+    methods_list : [MethodID]; // optional attached methods
+    signals_list : [SignalID]; // optional attached signals
 }
 
 table PlotDelete {
-    id        : PlotID (required);
+    id : PlotID (required);
 }
 
-// =============================================================================
+// ===========================================================================
 
+table InlineSource {
+    bytes : [byte] (required);
+}
+
+table URLSource {
+    url : string (required);
+}
+
+union BufferSource {
+    InlineSource, // either an inline set of bytes
+    URLSource     // or a URL to load
+}
+
+// A buffer describes a source of bytes to read from
 table BufferCreate {
-    id       : BufferID (required);
-    size     : uint64; // Size of buffer
+    // ID of the buffer to either create or update
+    id    : BufferID (required);
+    name  : string; // optional name of this buffer
+    size  : uint64; // Size of buffer, if missing or zero, invalid
 
     // where does the data come from?
-    // one option is inline
-    bytes    : [byte]; // limited in size.
-    // or
-    url      : string; // url to download data from 
+    source : BufferSource;
 }
 
 table BufferDelete {
@@ -359,20 +423,22 @@ table BufferDelete {
 
 // =============================================================================
 
-enum ViewType {
+enum ViewType : byte {
     UNKNOWN,
-    VERTEX_INFO,
-    INDEX_INFO,
-    IMAGE_INFO,
+    GEOMETRY_INFO, // Data contains geometry information (vertex, index)
+    IMAGE_INFO,    // Data contains an image
 }
 
+// Defines a subrange of a buffer, with a hint as to the data contained within.
 table BufferViewCreate {
+    // ID of the buffer view to either create or update
     id            : BufferViewID (required);
-    source_buffer : BufferID (required);
+    name          : string; // optional name of this view
+    source_buffer : BufferID (required); // Buffer this view looks at
 
-    type   : ViewType (required);
-    offset : uint64 = 0;
-    length : uint64 = 0;
+    type   : ViewType; // Type hint for this buffer
+    offset : uint64 = 0; // Offset into the buffer of this range
+    length : uint64 = 0; // Length of this range
 }
 
 table BufferViewDelete {
@@ -381,13 +447,15 @@ table BufferViewDelete {
 
 // =============================================================================
 
-// Textures may be assumed to be in SRGB. If so, they must be decoded to linear
-// before use in shaders, etc.
-
+// A reference to a texture
 table TextureRef {
-    texture_id         : TextureID;
+    texture_id         : TextureID (required);
+
+    // texture coordinate transform. If missing, identity
+    transform          : Mat3; 
+    
+    // texture coordinate channel of a mesh to be used in mapping
     texture_coord_slot : uint8;
-    transform          : Mat3;
 }
 
 table PBRInfo {
@@ -401,10 +469,12 @@ table PBRInfo {
 
 // non-atomic update semantics
 table MaterialCreateUpdate {
-    id           : MaterialID (required);
+    // ID of the new material or the material to update
+    id   : MaterialID (required);
+    name : string;
 
-    pbrInfo        : PBRInfo; // if missing, assume defaults.
-    normal_texture : TextureRef;
+    pbr_info       : PBRInfo; // if missing, assume defaults.
+    normal_texture : TextureRef; // if missing, no normal mapping
 
     occlusion_texture        : TextureRef; // assumed to be linear. ONLY R
     occlusion_texture_factor : float = 1;
@@ -424,56 +494,125 @@ table MaterialDelete {
 
 // =============================================================================
 
+union ImageSource {
+    BufferViewID, // Either a reference to a buffer
+    URLSource // Or a URL to load from
+}
+
+// Images may come in a variety of formats
+// - PNG
+// - JPEG
+// - KTX2
+// PNG and JPEG should be supported, KTX2 may be ignored
 table ImageCreate {
+    // ID of the image to create
     id       : ImageID (required);
+    name     : string; // name of this image
 
     // color space information must be ignored
-
-    // either
-    reference : BufferViewID;
-    // or
-    url : string;
+    source : ImageSource;
 }
 
 table ImageDelete {
-    id        : ImageID (required);
+    id : ImageID (required);
 }
 
 // =============================================================================
 
+// Textures may be assumed to be in SRGB. If so, they must be decoded to linear
+// before use in shaders, etc.
 table TextureCreate {
-    id    : TextureID (required);
-    image : ImageID (required);
+    id   : TextureID (required);
+    name : string;
 
-    // need samplers?
+    image   : ImageID (required);
+    sampler : SamplerID; // optional, if missing default sampler
 }
 
 table TextureDelete {
-    id        : TextureID (required);
+    id : TextureID (required);
 }
 
 // =============================================================================
 
-enum LightType : byte {
-    POINT = 0,
-    SUN, //Direct light along +Z
+enum MagFilter : byte {
+    NEAREST,
+    LINEAR,
+}
+
+enum MinFilter : byte {
+    NEAREST,
+    LINEAR,
+    NEAREST_MIPMAP_NEAREST,
+    LINEAR_MIPMAP_NEAREST,
+    NEAREST_MIPMAP_LINEAR,
+    LINEAR_MIPMAP_LINEAR,
+}
+
+enum SamplerMode : byte {
+    CLAMP_TO_EDGE,
+    MIRRORED_REPEAT,
+    REPEAT,
+}
+
+table SamplerCreate {
+    id   : SamplerID (required);
+    name : string;
+
+    mag_filter : MagFilter;
+    min_filter : MinFilter;
+
+    wrap_s : SamplerMode = REPEAT;
+    wrap_t : SamplerMode = REPEAT;
+}
+
+table SamplerDelete {
+    id : SamplerID (required);
+}
+
+// =============================================================================
+
+table PointLight {
+    range : float = -1;
+}
+
+table SpotLight {
+    //Direct light along -Z
+    range : float = -1;
+    inner_cone_angle_rad : float = 0;
+    outer_cone_angle_rad : float = 0.7853981633974483; // PI/4.0
+}
+
+table DirectionLight {
+    //Direct light along -Z
+    range : float = -1;
+}
+
+union LightType {
+    PointLight,
+    SpotLight, 
+    DirectionLight,
 }
 
 // non-atomic update semantics
 table LightCreateUpdate {
     id         : LightID (required);
-    color      : RGB;
-    intensity  : float;
-    spatial    : Vec4;
+    name       : string;
+
+    color      : RGB; // Linear space, default pure white
+    intensity  : float = 1.0;
+
     light_type : LightType; // after being set once, updates ignored
 }
+
 table LightDelete {
-    id        : LightID (required);
+    id : LightID (required);
 }
 
 // =============================================================================
 
-struct StructuredAttribute { 
+// Interpret a view as a strided pack of vector or matrix elements
+table StructuredAttribute { 
     // All elements required, but not expressable in this spec
     id     : BufferViewID (required);
     stride : uint64 = 0;
@@ -503,12 +642,12 @@ table GeometryPatch {
     // optional, if missing, non-indexed primitives only
     indicies   : StructuredAttribute; // u8, u16, u32
 
-    type : PrimitiveType = PrimitiveType::TRIANGLES;
+    type : PrimitiveType = TRIANGLES;
 }
 
 table GeometryCreate {
-    id : GeometryID (required); // id of the new geometry
-
+    id      : GeometryID (required); // id of the new geometry
+    name    : string;
     patches : [ GeometryPatch ];    
 }
 
@@ -547,10 +686,8 @@ table DocumentReset {
 table SignalInvoke {
     id  : SignalID (required);
 
-    // if the two below are not set, it is on the document
-    on_object : ObjectID;
-    on_table  : TableID;
-    on_plot   : PlotID;
+    // if not set, it is on the document
+    on_object : InvokeIDType;
 
     signal_data  : AnyList;
 }
@@ -574,8 +711,8 @@ union ServerMessageType {
     MethodDelete,
     SignalCreate,
     SignalDelete,
-    ObjectCreateUpdate,
-    ObjectDelete,
+    EntityCreateUpdate,
+    EntityDelete,
     BufferCreate,
     BufferDelete,
     BufferViewCreate,
@@ -584,6 +721,8 @@ union ServerMessageType {
     MaterialDelete,
     TextureCreate,
     TextureDelete,
+    SamplerCreate,
+    SamplerDelete,
     ImageCreate,
     ImageDelete,
     LightCreateUpdate,
@@ -613,29 +752,21 @@ table ServerMessages {
 
 table IntroductionMessage {
     client_name : string (required);
-    version : uint32 = 0;
 }
 
 table MethodInvokeMessage {
     method_id : MethodID (required);
 
-    // if any of the below is not set, it is on the document
-    on_object : ObjectID;
-    on_table  : TableID;
-    on_plot   : PlotID;
+    // if not set, it is on the document
+    on_object : InvokeIDType;
 
-    invoke_ident : string (required);
+    invoke_ident : string;
     method_args  : AnyList;
-}
-
-table AssetRefreshMessage {
-    for_buffers : [ BufferID ] (required);
 }
 
 union ClientMessageType {
     IntroductionMessage,
     MethodInvokeMessage,
-    AssetRefreshMessage
 }
 
 table ClientMessage {

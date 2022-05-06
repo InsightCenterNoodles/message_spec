@@ -1,5 +1,5 @@
 echo "Emitting C++ Interface"
-flatc -I ../interface -o . --scoped-enums --reflect-names --gen-mutable --cpp-std=c++17 -c ../interface/noodles.fbs
+flatc -I ../interface -o . --scoped-enums --reflect-names --gen-mutable --cpp-std c++17 -c ../interface/noodles.fbs
 echo "Emitting Python Interface"
 flatc -I ../interface -o . --reflect-names --gen-mutable -p ../interface/noodles.fbs
 echo "Emitting Rust Interface"
