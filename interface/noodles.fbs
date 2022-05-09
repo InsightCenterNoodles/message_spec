@@ -581,8 +581,8 @@ table SamplerCreate {
     id   : SamplerID (required);
     name : string;
 
-    mag_filter : MagFilter;
-    min_filter : MinFilter;
+    mag_filter : MagFilter; // default is LINEAR
+    min_filter : MinFilter; // default is LINEAR_MIPMAP_LINEAR
 
     wrap_s : SamplerMode = REPEAT;
     wrap_t : SamplerMode = REPEAT;
@@ -598,19 +598,19 @@ table SamplerDelete {
 
 // A point light source
 table PointLight {
-    range : float = -1;
+    range : float = -1; // if <0, range is infinite
 }
 
 table SpotLight {
     //Direct light along -Z
-    range : float = -1;
+    range : float = -1; // if <0, range is infinite
     inner_cone_angle_rad : float = 0;
     outer_cone_angle_rad : float = 0.7853981633974483; // PI/4.0
 }
 
 table DirectionLight {
     //Direct light along -Z
-    range : float = -1;
+    range : float = -1; // if <0, range is infinite
 }
 
 union LightType {
@@ -677,7 +677,7 @@ table Attribute {
     normalized : bool = false; 
 }
 
-table IndexSemantic {
+table Index {
     view     : BufferViewID;
     // bytes between indicies. for performance, recommend all indicies be 
     // tightly packed, with no padding.
@@ -689,7 +689,7 @@ table GeometryPatch {
     attributes : [Attribute];
 
     // optional, if missing, non-indexed primitives only
-    indicies   : IndexSemantic; // u8, u16, u32
+    indicies   : Index; // u8, u16, u32
 
     type : PrimitiveType = TRIANGLES;
 
