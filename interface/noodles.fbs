@@ -332,8 +332,7 @@ table InstanceSemantic {
 
 // Render this entity as a mesh
 table RenderableDefinition {
-    material    : MaterialID (required);
-    mesh        : [GeometryID] (required);
+    mesh        : GeometryID (required);
     instances   : InstanceSemantic; // optional
     instance_bb : BoundingBox; // optional override for instanced object culling
 }
@@ -464,7 +463,7 @@ table BufferViewCreate {
 }
 
 table BufferViewDelete {
-    id    : BufferID (required);
+    id    : BufferViewID (required);
 }
 
 // =============================================================================
