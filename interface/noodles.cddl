@@ -1,30 +1,30 @@
 IDGroup = ( slot: uint, gen: uint )
 
-EntityID = { id_grp }
+EntityID = [ id_grp ]
 
-TableID = { id_grp }
+TableID = [ id_grp ]
 
-PlotID = { id_grp }
+PlotID = [ id_grp ]
 
-SignalID = { id_grp }
+SignalID = [ id_grp ]
 
-MethodID = { id_grp }
+MethodID = [ id_grp ]
 
-MaterialID = { id_grp }
+MaterialID = [ id_grp ]
 
-GeometryID = { id_grp }
+GeometryID = [ id_grp ]
 
-LightID = { id_grp }
+LightID = [ id_grp ]
 
-ImageID = { id_grp }
+ImageID = [ id_grp ]
 
-TextureID = { id_grp }
+TextureID = [ id_grp ]
 
-SamplerID = { id_grp }
+SamplerID = [ id_grp ]
 
-BufferID = { id_grp }
+BufferID = [ id_grp ]
 
-BufferViewID = { id_grp }
+BufferViewID = [ id_grp ]
 
 InvokeIDType = {
     ; ONE OF
@@ -186,8 +186,8 @@ MsgBufferCreate = {
     size : uint,
 
     ; ONE OF 
-    ? inline_bytes : bytes //
-    ? uri_bytes : uri,
+    inline_bytes : bytes //
+    uri_bytes : uri,
     ; END ONE OF
 }
 
@@ -215,8 +215,8 @@ MsgBufferViewDelete = {
 
 TextureRef = {
     texture : TextureID,
-    ? transform : Mat3,
-    texture_coord_slot : uint,
+    ? transform : Mat3, ; if missing assume identity
+    ? texture_coord_slot : uint, ; if missing, assume 0
 }
 
 PBRInfo = {
@@ -231,11 +231,8 @@ PBRInfo = {
 MsgMaterialCreate = {
     id : MaterialID,
     ? name : tstr,
-}
 
-MsgMaterialUpdate = {
-    id : MaterialID,
-    ? pbr_info : PBRInfo,
+    ? pbr_info : PBRInfo, ; if missing, defaults
     ? normal_texture : TextureRef,
     
     ? occlusion_texture : TextureRef, ; assumed to be linear, ONLY R used
@@ -250,6 +247,11 @@ MsgMaterialUpdate = {
     ? double_sided : bool, ; false by default
 }
 
+MsgMaterialUpdate = {
+    id : MaterialID,
+    ; TBD
+}
+
 MsgMaterialDelete = {
     id : MaterialID,
 }
@@ -261,8 +263,10 @@ MsgImageCreate = {
     ? name : tstr,
 
     ; ONE OF 
-    ? buffer_source : BufferViewID //
-    ? uri_source : uri,
+    (
+        buffer_source : BufferViewID //
+        uri_source : uri
+    ),
     ; END ONE OF
 }
 
