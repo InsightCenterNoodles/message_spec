@@ -1,0 +1,519 @@
+IDGroup = ( slot: uint, gen: uint )
+
+EntityID = { id_grp }
+
+TableID = { id_grp }
+
+PlotID = { id_grp }
+
+SignalID = { id_grp }
+
+MethodID = { id_grp }
+
+MaterialID = { id_grp }
+
+GeometryID = { id_grp }
+
+LightID = { id_grp }
+
+ImageID = { id_grp }
+
+TextureID = { id_grp }
+
+SamplerID = { id_grp }
+
+BufferID = { id_grp }
+
+BufferViewID = { id_grp }
+
+InvokeIDType = {
+    ; ONE OF
+    entity : EntityID // 
+    table: TableID // 
+    plot: PlotID
+}
+
+MethodArg = { 
+    name: tstr, 
+    ? doc: tstr, 
+    ? editor_hint: tstr, 
+}
+
+Vec3 = [3 * float]
+Vec4 = [4 * float]
+Mat4 = [16 * float]
+
+RGB = [3*float]
+RGBA = [4*float]
+
+BoundingBox = {
+    min : Vec3,
+    max : Vec3,
+}
+
+Format = 
+    "U8" /
+    "U16"/
+    "U32"/
+    ;
+    "U8VEC4"/
+    ;
+    "U16VEC2"/
+    ;
+    "VEC2"/
+    "VEC3"/
+    "VEC4"/
+    ;
+    "MAT3"/
+    "MAT4"
+
+; ==============================================================================
+; Server messages
+; ==============================================================================
+
+; Method Messages ==============================================================
+
+MsgMethodCreate = {
+	id: MethodID,
+	name: tstr,
+	? doc: tstr,
+	? return_doc: tstr,
+	? arg_doc: [ + MethodArg ]
+}
+
+MsgMethodDelete = { id: MethodID }
+
+; Signal Messages ==============================================================
+
+MsgSignalCreate = {
+	id: SignalID,
+	name: tstr,
+	? doc: tstr,
+	? arg_doc: [ + MethodArg ]
+}
+
+MsgSignalDelete = { id: SignalID }
+
+; Entity Messages ==============================================================
+
+TextRepresentation = {
+	txt: tstr,
+	? font: tstr, ; if missing, 'Arial'
+	? height: float, ; if missing, .25
+	? width: float, ; if missing, -1
+}
+
+WebRepresentation = {
+    source : uri,
+    ? height : float, ; if missing, .5
+    ? width : float, ; if missing, .5,
+}
+
+RenderRepresentation = {
+    mesh : GeometryID,
+    ? instances : InstanceSource,
+}
+
+InstanceSource = {
+    ; this is a view of mat4.
+    view : BufferViewID,
+
+    ; bytes between instance matrices. For best performance, there should be
+    ; no padding
+    stride : uint,
+}
+
+MsgEntityCreate = {
+    id : EntityID,
+    ? name : tstr
+}
+
+MsgEntityUpdate = {
+    id : EntityID,
+    ? parent : EntityID,
+    ? transform : Mat4,
+    
+    ; ONE OF 
+    ? null_rep : any //
+    ? text_rep : TextRepresentation //
+    ? web_rep  : WebRepresentation //
+    ? render_rep : RenderRepresentation,
+    ; END ONE OF
+
+    ? lights : [* LightID],
+    ? tables : [* TableID],
+    ? plots : [* PlotID],
+    ? tags : [* tstr],
+    ? methods_list : [* MethodID],
+    ? signals_list : [* SignalID],
+
+    ? influence : BoundingBox,
+}
+
+MsgEntityDelete = {
+    id : EntityID,
+}
+
+; Plot Messages ================================================================
+
+MsgPlotCreate = {
+    id : PlotID,
+    ? name : tstr
+}
+
+MsgPlotUpdate = {
+    id : PlotID,
+    ? table_ref : TableID,
+    
+    ; ONE OF 
+    ? simple_plot : text //
+    ? url_plot : uri,
+    ; END ONE OF
+
+    ? methods_list : [* MethodID],
+    ? signals_list : [* SignalID],
+}
+
+MsgPlotDelete = {
+    id : PlotID,
+}
+
+; Buffer Messages ==============================================================
+
+MsgBufferCreate = {
+    id : BufferID,
+    ? name : tstr,
+    size : uint,
+
+    ; ONE OF 
+    ? inline_bytes : bytes //
+    ? uri_bytes : uri,
+    ; END ONE OF
+}
+
+MsgBufferDelete = {
+    id : BufferID,
+}
+
+; Buffer Messages ==============================================================
+
+MsgBufferViewCreate = {
+    id : BufferViewID,
+    ? name : tstr,
+    source_buffer : BufferID,
+
+    type : "UNK" / "GEOMETRY" / "IMAGE",
+    offset : uint,
+    length : uint,
+}
+
+MsgBufferViewDelete = {
+    id : BufferViewID,
+}
+
+; Material Messages ============================================================
+
+TextureRef = {
+    texture : TextureID,
+    ? transform : Mat3,
+    texture_coord_slot : uint,
+}
+
+PBRInfo = {
+    base_color : RGBA, ; Default is all white
+    ? base_color_texture : TextureRef, ; Assumed to be SRGB, no premult alpha
+
+    ? metallic : float, ; assume 1 by default
+    ? roughness : float, ; assume 1 by default
+    ? metal_rough_texture : TextureRef, ; Assumed to be linear, ONLY RG used
+}
+
+MsgMaterialCreate = {
+    id : MaterialID,
+    ? name : tstr,
+}
+
+MsgMaterialUpdate = {
+    id : MaterialID,
+    ? pbr_info : PBRInfo,
+    ? normal_texture : TextureRef,
+    
+    ? occlusion_texture : TextureRef, ; assumed to be linear, ONLY R used
+    ? occlusion_texture_factor : float, ; assume 1 by default
+
+    ? emissive_texture : TextureRef, ; assumed to be SRGB. ignore A.
+    ? emissive_factor  : Vec3, ; all 1 by default
+
+    ? use_alpha    : bool,  ; false by default
+    ? alpha_cutoff : float, ; .5 by default
+
+    ? double_sided : bool, ; false by default
+}
+
+MsgMaterialDelete = {
+    id : MaterialID,
+}
+
+; Image Messages ===============================================================
+
+MsgImageCreate = {
+    id : ImageID,
+    ? name : tstr,
+
+    ; ONE OF 
+    ? buffer_source : BufferViewID //
+    ? uri_source : uri,
+    ; END ONE OF
+}
+
+MsgImageDelete = {
+    id : ImageID,
+}
+
+; Texture Messages =============================================================
+
+MsgTextureCreate = {
+    id : TextureID,
+    ? name : tstr,
+    image : ImageID,
+    ? sampler : SamplerID, ; if missing use a default sampler
+}
+
+MsgTextureDelete = {
+    id : TextureID,
+}
+
+; Sampler Messages =============================================================
+
+MinFilters = "NEAREST" / "LINEAR" / "LINEAR_MIPMAP_LINEAR"
+
+SamplerMode = "CLAMP_TO_EDGE" / "MIRRORED_REPEAT" / "REPEAT"
+
+MsgSamplerCreate = {
+    id : SamplerID,
+    ? name : tstr,
+    
+    ? mag_filter : "NEAREST" / "LINEAR", ; default is LINEAR
+    ? min_filter : MinFilters, ; default is LINEAR_MIPMAP_LINEAR
+
+    ? wrap_s : SamplerMode, ; default is REPEAT
+    ? wrap_t : SamplerMode, ; default is REPEAT
+}
+
+MsgSamplerDelete = {
+    id : SamplerID,
+}
+
+; Light Messages ===============================================================
+
+PointLight = {
+    range : float ; // default is -1. if <0 range is infinite
+}
+SpotLight = {
+    range : float ; // default is -1. if <0 range is infinite
+    inner_cone_angle_rad : float, ; default is 0
+    outer_cone_angle_rad : float, ; defautl is PI/4.0
+}
+DirectionalLight = {
+    range : float ; // default is -1. if <0 range is infinite
+}
+
+MsgLightCreate = {
+    id : LightID,
+    ? name : tstr,
+}
+
+MsgLightUpdate = {
+    id : LightID,
+    
+    ? color : RGB, ; linear space, default is pure white
+    ? intensity : float, ; default is 1
+    
+    ; ONE OF 
+    ? point : PointLight //
+    ? spot  : SpotLight //
+    ? directional : DirectionalLight,
+    ; END ONE OF
+}
+
+MsgLightDelete = {
+    id : LightID,
+}
+
+; Geometry Messages ============================================================
+
+PrimativeType = "POINTS"/
+                "LINES"/
+                "LINE_LOOP"/
+                "LINE_STRIP"/
+                "TRIANGLES"/
+                "TRIANGLE_STRIP"/
+                "TRIANGLE_FAN" 
+                ; Tri fan not recommended, some hardware support is lacking
+
+AttributeSemantic = 
+    "POSITION" / ; for the moment, must be a vec3.
+    "NORMAL" /   ; for the moment, must be a vec3.
+    "TANGENT" /  ; for the moment, must be a vec3.
+    "TEXTURE" /  ; for the moment, is either a vec2, or normalized u16vec2
+    "COLOR"      ; normalized u8vec4, or vec4
+
+Attribute = {
+    view : BufferViewID,
+    semantic : AttributeSemantic,
+    ? channel : uint,
+    stride : uint, ; default 0
+    format : Format,
+    ? minimum_value = [* float],
+    ? maximum_value = [* float],
+    ? normalized = bool, ; default false
+}
+
+Index = {
+    view : BufferViewID,
+    ? stride : uint; default 0
+    format : Format; only U8, U16, and U32 are accepted
+}
+
+GeometryPatch = {
+    attributes = [ + Attribute ],
+    ? indicies = Index, ; if missing, non indexed primitives only
+    type = PrimativeType, 
+    material = MaterialID,
+}
+
+MsgGeometryCreate = {
+    id : GeometryID,
+    ? name : tstr,
+    patches : [+ GeometryPatch],
+}
+
+MsgGeometryDelete = {
+    id : GeometryID,
+}
+
+; Table Messages ===============================================================
+
+MsgTableCreate = {
+    id : TableID,
+    ? name : tstr,
+}
+
+MsgTableUpdate = {
+    id : TableID,
+    
+    ? meta : text,
+    ? methods_list : [* MethodID],
+    ? signals_list : [* SignalID],
+}
+
+MsgTableDelete = {
+    id : TableID,
+}
+
+; Document Messages ============================================================
+
+MsgDocumentUpdate = {
+    ? methods_list : [* MethodID],
+    ? signals_list : [* SignalID],
+}
+
+MsgDocumentReset = {
+}
+
+; Communication Messages =======================================================
+
+MsgSignalInvoke = {
+    id : SignalID,
+
+    ; if not set, the context is on the document
+    ? context : InvokeIDType,
+
+    signal_data : [ * any ]
+}
+
+MethodException = {
+    code : int,
+    ? message : text,
+    ? data : any,
+}
+
+MsgMethodReply = {
+    invoke_id : text,
+    ? result : any,
+    ? method_exception : MethodException,
+}
+
+; Aggregate Messages ===========================================================
+
+ServerMessageTypes = 
+    MsgMethodCreate /    ; 0
+    MsgMethodDelete /    ; 1
+    MsgSignalCreate /    ; 2
+    MsgSignalDelete /    ; 3
+    MsgEntityCreate /    ; 4
+    MsgEntityUpdate /    ; 5
+    MsgEntityDelete /    ; 6
+    MsgPlotCreate /      ; 7
+    MsgPlotUpdate /      ; 8
+    MsgPlotDelete /      ; 9
+    MsgBufferCreate /    ; 10
+    MsgBufferDelete /    ; 11
+    MsgBufferViewCreate /; 12
+    MsgBufferViewDelete /; 13
+    MsgMaterialCreate /  ; 14
+    MsgMaterialUpdate /  ; 15
+    MsgMaterialDelete /  ; 16
+    MsgImageCreate /     ; 17
+    MsgImageDelete /     ; 18
+    MsgTextureCreate /   ; 19
+    MsgTextureDelete /   ; 20
+    MsgSamplerCreate /   ; 21
+    MsgSamplerDelete /   ; 22
+    MsgLightCreate /     ; 23
+    MsgLightUpdate /     ; 24
+    MsgLightDelete /     ; 25
+    MsgGeometryCreate /  ; 26
+    MsgGeometryDelete /  ; 27
+    MsgTableCreate /     ; 28
+    MsgTableUpdate /     ; 29
+    MsgTableDelete /     ; 30
+    MsgDocumentUpdate /  ; 31
+    MsgDocumentReset /   ; 32
+    MsgSignalInvoke /    ; 33
+    MsgMethodReply       ; 34
+
+ServerMessage = [
+    type: uint, 
+    content: ServerMessageTypes
+]
+
+; Root message
+ServerMessages = [ + ServerMessage ]
+
+; ==============================================================================
+; Client messages
+; ==============================================================================
+
+MsgIntroduction = {
+    client_name : text
+}
+
+MsgInvokeMethod = {
+    method : MethodID,
+    ? context : InvokeIDType,
+    ? invoke_id : text,
+    args : [ * any ]
+}
+
+ClientMessageTypes = 
+    MsgIntroduction / ; 0
+    MsgInvokeMethod   ; 1
+
+ClientMessage = [
+    type : uint,
+    content : ClientMessageTypes
+]
+
+; Root message
+ClientMessages = [ + ClientMessage ]
