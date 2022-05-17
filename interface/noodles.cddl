@@ -78,7 +78,7 @@ MsgMethodCreate = {
 	name: tstr,
 	? doc: tstr,
 	? return_doc: tstr,
-	? arg_doc: [ + MethodArg ]
+	arg_doc: [ * MethodArg ]
 }
 
 MsgMethodDelete = { id: MethodID }
@@ -89,7 +89,7 @@ MsgSignalCreate = {
 	id: SignalID,
 	name: tstr,
 	? doc: tstr,
-	? arg_doc: [ + MethodArg ]
+	arg_doc: [ * MethodArg ]
 }
 
 MsgSignalDelete = { id: SignalID }
@@ -121,11 +121,32 @@ InstanceSource = {
     ; bytes between instance matrices. For best performance, there should be
     ; no padding
     stride : uint,
+
+    ? bb : BoundingBox, 
 }
 
 MsgEntityCreate = {
     id : EntityID,
     ? name : tstr
+
+    ? parent : EntityID,
+    ? transform : Mat4,
+    
+    ; ONE OF 
+    ? null_rep : any //
+    ? text_rep : TextRepresentation //
+    ? web_rep  : WebRepresentation //
+    ? render_rep : RenderRepresentation,
+    ; END ONE OF
+
+    ? lights : [* LightID],
+    ? tables : [* TableID],
+    ? plots : [* PlotID],
+    ? tags : [* tstr],
+    ? methods_list : [* MethodID],
+    ? signals_list : [* SignalID],
+
+    ? influence : BoundingBox,
 }
 
 MsgEntityUpdate = {
@@ -159,11 +180,21 @@ MsgEntityDelete = {
 MsgPlotCreate = {
     id : PlotID,
     ? name : tstr
+
+    ? table : TableID,
+    
+    ; ONE OF 
+    ? simple_plot : text //
+    ? url_plot : uri,
+    ; END ONE OF
+
+    ? methods_list : [* MethodID],
+    ? signals_list : [* SignalID],
 }
 
 MsgPlotUpdate = {
     id : PlotID,
-    ? table_ref : TableID,
+    ? table : TableID,
     
     ; ONE OF 
     ? simple_plot : text //
@@ -325,19 +356,24 @@ DirectionalLight = {
 MsgLightCreate = {
     id : LightID,
     ? name : tstr,
+
+    ? color : RGB, ; linear space, default is pure white
+    ? intensity : float, ; default is 1
+
+    ; ONE OF 
+    (
+        point : PointLight //
+        spot  : SpotLight //
+        directional : DirectionalLight
+    )
+    ; END ONE OF
 }
 
 MsgLightUpdate = {
     id : LightID,
     
-    ? color : RGB, ; linear space, default is pure white
+    ? color : RGB, ; linear space
     ? intensity : float, ; default is 1
-    
-    ; ONE OF 
-    ? point : PointLight //
-    ? spot  : SpotLight //
-    ? directional : DirectionalLight,
-    ; END ONE OF
 }
 
 MsgLightDelete = {
@@ -366,7 +402,7 @@ Attribute = {
     view : BufferViewID,
     semantic : AttributeSemantic,
     ? channel : uint,
-    stride : uint, ; default 0
+    ? stride : uint, ; default 0
     format : Format,
     ? minimum_value = [* float],
     ? maximum_value = [* float],
@@ -401,6 +437,10 @@ MsgGeometryDelete = {
 MsgTableCreate = {
     id : TableID,
     ? name : tstr,
+
+    ? meta : text,
+    ? methods_list : [* MethodID],
+    ? signals_list : [* SignalID],
 }
 
 MsgTableUpdate = {
@@ -450,47 +490,86 @@ MsgMethodReply = {
 
 ; Aggregate Messages ===========================================================
 
-ServerMessageTypes = 
-    MsgMethodCreate /    ; 0
-    MsgMethodDelete /    ; 1
-    MsgSignalCreate /    ; 2
-    MsgSignalDelete /    ; 3
-    MsgEntityCreate /    ; 4
-    MsgEntityUpdate /    ; 5
-    MsgEntityDelete /    ; 6
-    MsgPlotCreate /      ; 7
-    MsgPlotUpdate /      ; 8
-    MsgPlotDelete /      ; 9
-    MsgBufferCreate /    ; 10
-    MsgBufferDelete /    ; 11
-    MsgBufferViewCreate /; 12
-    MsgBufferViewDelete /; 13
-    MsgMaterialCreate /  ; 14
-    MsgMaterialUpdate /  ; 15
-    MsgMaterialDelete /  ; 16
-    MsgImageCreate /     ; 17
-    MsgImageDelete /     ; 18
-    MsgTextureCreate /   ; 19
-    MsgTextureDelete /   ; 20
-    MsgSamplerCreate /   ; 21
-    MsgSamplerDelete /   ; 22
-    MsgLightCreate /     ; 23
-    MsgLightUpdate /     ; 24
-    MsgLightDelete /     ; 25
-    MsgGeometryCreate /  ; 26
-    MsgGeometryDelete /  ; 27
-    MsgTableCreate /     ; 28
-    MsgTableUpdate /     ; 29
-    MsgTableDelete /     ; 30
-    MsgDocumentUpdate /  ; 31
-    MsgDocumentReset /   ; 32
-    MsgSignalInvoke /    ; 33
-    MsgMethodReply       ; 34
+ServerMessageMapping = (
+  0 :  MsgMethodCreate //    ; 
+  1 :  MsgMethodDelete //    ; 
+  2 :  MsgSignalCreate //    ; 
+  3 :  MsgSignalDelete //    ; 
+  4 :  MsgEntityCreate //    ; 
+  5 :  MsgEntityUpdate //    ; 
+  6 :  MsgEntityDelete //    ; 
+  7 :  MsgPlotCreate //      ; 
+  8 :  MsgPlotUpdate //      ; 
+  9 :  MsgPlotDelete //      ; 
+  10 :  MsgBufferCreate //    ; 
+  11 :  MsgBufferDelete //    ; 
+  12 :  MsgBufferViewCreate //; 
+  13 :  MsgBufferViewDelete //; 
+  14 :  MsgMaterialCreate //  ; 
+  15 :  MsgMaterialUpdate //  ; 
+  16 :  MsgMaterialDelete //  ; 
+  17 :  MsgImageCreate //     ; 
+  18 :  MsgImageDelete //     ; 
+  19 :  MsgTextureCreate //   ; 
+  20 :  MsgTextureDelete //   ; 
+  21 :  MsgSamplerCreate //   ; 
+  22 :  MsgSamplerDelete //   ; 
+  23 :  MsgLightCreate //     ; 
+  24 :  MsgLightUpdate //     ; 
+  25 :  MsgLightDelete //     ; 
+  26 :  MsgGeometryCreate //  ; 
+  27 :  MsgGeometryDelete //  ; 
+  28 :  MsgTableCreate //     ; 
+  29 :  MsgTableUpdate //     ; 
+  30 :  MsgTableDelete //     ; 
+  31 :  MsgDocumentUpdate //  ; 
+  32 :  MsgDocumentReset //   ; 
+  33 :  MsgSignalInvoke //    ; 
+  34 :  MsgMethodReply       ; 
+)
 
-ServerMessage = [
-    type: uint, 
-    content: ServerMessageTypes
-]
+ServerMessageContent = (
+   MsgMethodCreate //    ; 
+   MsgMethodDelete //    ; 
+   MsgSignalCreate //    ; 
+   MsgSignalDelete //    ; 
+   MsgEntityCreate //    ; 
+   MsgEntityUpdate //    ; 
+   MsgEntityDelete //    ; 
+   MsgPlotCreate //      ; 
+   MsgPlotUpdate //      ; 
+   MsgPlotDelete //      ; 
+   MsgBufferCreate //    ; 
+   MsgBufferDelete //    ; 
+   MsgBufferViewCreate //; 
+   MsgBufferViewDelete //; 
+   MsgMaterialCreate //  ; 
+   MsgMaterialUpdate //  ; 
+   MsgMaterialDelete //  ; 
+   MsgImageCreate //     ; 
+   MsgImageDelete //     ; 
+   MsgTextureCreate //   ; 
+   MsgTextureDelete //   ; 
+   MsgSamplerCreate //   ; 
+   MsgSamplerDelete //   ; 
+   MsgLightCreate //     ; 
+   MsgLightUpdate //     ; 
+   MsgLightDelete //     ; 
+   MsgGeometryCreate //  ; 
+   MsgGeometryDelete //  ; 
+   MsgTableCreate //     ; 
+   MsgTableUpdate //     ; 
+   MsgTableDelete //     ; 
+   MsgDocumentUpdate //  ; 
+   MsgDocumentReset //   ; 
+   MsgSignalInvoke //    ; 
+   MsgMethodReply        ; 
+)
+
+ServerMessage = (
+    type : uint,
+    content : ServerMessageContent
+)
 
 ; Root message
 ServerMessages = [ + ServerMessage ]
@@ -510,14 +589,22 @@ MsgInvokeMethod = {
     args : [ * any ]
 }
 
-ClientMessageTypes = 
-    MsgIntroduction / ; 0
-    MsgInvokeMethod   ; 1
+; Aggregate Messages ===========================================================
 
-ClientMessage = [
+ClientMessageMapping = ( 
+    0 : MsgIntroduction //
+    1 : MsgInvokeMethod   
+)
+
+ClientMessageContent = ( 
+    MsgIntroduction //
+    MsgInvokeMethod   
+)
+
+ClientMessage = (
     type : uint,
-    content : ClientMessageTypes
-]
+    content : ClientMessageGroup
+)
 
 ; Root message
 ClientMessages = [ + ClientMessage ]
