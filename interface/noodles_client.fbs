@@ -1,5 +1,0 @@
-include "noodles.fbs";
-
-namespace noodles;
-
-root_type ClientMessages;

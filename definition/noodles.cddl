@@ -402,6 +402,7 @@ Attribute = {
     view : BufferViewID,
     semantic : AttributeSemantic,
     ? channel : uint,
+    ? offset : uint, ; default 0
     ? stride : uint, ; default 0
     format : Format,
     ? minimum_value = [* float],
@@ -411,8 +412,9 @@ Attribute = {
 
 Index = {
     view : BufferViewID,
-    ? stride : uint; default 0
-    format : Format; only U8, U16, and U32 are accepted
+    ? offset : uint, ; default 0
+    ? stride : uint,; default 0
+    format : Format,; only U8, U16, and U32 are accepted
 }
 
 GeometryPatch = {
