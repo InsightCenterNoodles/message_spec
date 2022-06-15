@@ -1,3 +1,5 @@
+; Common Definitions
+
 IDGroup = ( slot: uint, gen: uint )
 
 EntityID = [ id_grp ]
@@ -66,6 +68,33 @@ Format =
     ;
     "MAT3"/
     "MAT4"
+
+
+; Table selection
+
+SelectionRange = ( key_from_inclusive : int, key_to_exclusive : int )
+
+Selection = {
+    name : text,
+    ? rows : [* int],
+    ? row_ranges : [* SelectionRange],
+}
+
+TableColumn = [
+    * any
+]
+
+TableColumnInfo = {
+    name : text,
+    type : "TEXT" / "REAL" / "INTEGER"
+}
+
+TableInitData = {
+    columns : [* TableColumnInfo],
+    keys : [* int],
+    data : [ * TableColumn ],
+    ? selections : [ * Selection ],
+}
 
 ; ==============================================================================
 ; Server messages
@@ -405,23 +434,25 @@ Attribute = {
     ? offset : uint, ; default 0
     ? stride : uint, ; default 0
     format : Format,
-    ? minimum_value = [* float],
-    ? maximum_value = [* float],
-    ? normalized = bool, ; default false
+    ? minimum_value : [* float],
+    ? maximum_value : [* float],
+    ? normalized : bool, ; default false
 }
 
 Index = {
     view : BufferViewID,
+    count : uint,
     ? offset : uint, ; default 0
     ? stride : uint,; default 0
     format : Format,; only U8, U16, and U32 are accepted
 }
 
 GeometryPatch = {
-    attributes = [ + Attribute ],
-    ? indicies = Index, ; if missing, non indexed primitives only
-    type = PrimativeType, 
-    material = MaterialID,
+    attributes   : [ + Attribute ],
+    vertex_count : uint,
+    ? indicies   : Index, ; if missing, non indexed primitives only
+    type : PrimativeType, 
+    material : MaterialID,
 }
 
 MsgGeometryCreate = {
