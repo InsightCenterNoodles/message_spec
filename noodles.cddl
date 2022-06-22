@@ -84,6 +84,10 @@ TableColumn = [
     * any
 ]
 
+TableRow = [
+    * any
+]
+
 TableColumnInfo = {
     name : text,
     type : "TEXT" / "REAL" / "INTEGER"
@@ -206,6 +210,18 @@ MsgEntityDelete = {
 
 ; Plot Messages ================================================================
 
+SimplePlotColumnInfo = {
+	name : tstr,
+	prefers : "x" // "y",
+	color : tstr,
+	range : [from : float, to : float]
+}
+
+SimplePlotInfo = {
+	name : text,
+	columns : [ SimplePlotColumnInfo ]
+}
+
 MsgPlotCreate = {
     id : PlotID,
     ? name : tstr
@@ -213,7 +229,7 @@ MsgPlotCreate = {
     ? table : TableID,
     
     ; ONE OF 
-    ? simple_plot : text //
+    ? simple_plot : SimplePlotInfo //
     ? url_plot : uri,
     ; END ONE OF
 
@@ -411,14 +427,12 @@ MsgLightDelete = {
 
 ; Geometry Messages ============================================================
 
-PrimativeType = "POINTS"/
+PrimitiveType = "POINTS"/
                 "LINES"/
                 "LINE_LOOP"/
                 "LINE_STRIP"/
                 "TRIANGLES"/
-                "TRIANGLE_STRIP"/
-                "TRIANGLE_FAN" 
-                ; Tri fan not recommended, some hardware support is lacking
+                "TRIANGLE_STRIP"
 
 AttributeSemantic = 
     "POSITION" / ; for the moment, must be a vec3.
@@ -451,7 +465,7 @@ GeometryPatch = {
     attributes   : [ + Attribute ],
     vertex_count : uint,
     ? indicies   : Index, ; if missing, non indexed primitives only
-    type : PrimativeType, 
+    type : PrimitiveType, 
     material : MaterialID,
 }
 
@@ -636,7 +650,7 @@ ClientMessageContent = (
 
 ClientMessage = (
     type : uint,
-    content : ClientMessageGroup
+    content : ClientMessageContent
 )
 
 ; Root message
