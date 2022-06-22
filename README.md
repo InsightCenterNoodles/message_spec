@@ -1,2 +1,1 @@
-# message_spec
-The base NOODLES message specification and Flatbuffer interfaces
+The base NOODLES message specification and CDDL description.
