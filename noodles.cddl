@@ -180,6 +180,7 @@ MsgEntityCreate = {
     ? signals_list : [* SignalID],
 
     ? influence : BoundingBox,
+    ? visible : bool, ; default to true
 }
 
 MsgEntityUpdate = {
@@ -202,6 +203,7 @@ MsgEntityUpdate = {
     ? signals_list : [* SignalID],
 
     ? influence : BoundingBox,
+    ? visible : bool,
 }
 
 MsgEntityDelete = {
@@ -395,6 +397,8 @@ SpotLight = {
     outer_cone_angle_rad : float, ; defautl is PI/4.0
 }
 DirectionalLight = {
+    ; direction of the light is down the -z direction, and the hosting node's 
+    ; orientation will modify this.
     range : float ; // default is -1. if <0 range is infinite
 }
 
