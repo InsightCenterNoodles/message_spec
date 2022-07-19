@@ -90,13 +90,13 @@ TableRow = [
 
 TableColumnInfo = {
     name : text,
-    type : "TEXT" / "REAL" / "INTEGER"
+    type : "TEXT" / "REAL" / "INTEGER" / "ANY"
 }
 
 TableInitData = {
     columns : [* TableColumnInfo],
     keys : [* int],
-    data : [ * TableColumn ],
+    data : [ * TableRow ],
     ? selections : [ * Selection ],
 }
 
@@ -516,6 +516,9 @@ MsgDocumentUpdate = {
 MsgDocumentReset = {
 }
 
+MsgDocumentInitialized = {
+}
+
 ; Communication Messages =======================================================
 
 MsgSignalInvoke = {
@@ -575,8 +578,9 @@ ServerMessageMapping = (
   30 :  MsgTableDelete //     ; 
   31 :  MsgDocumentUpdate //  ; 
   32 :  MsgDocumentReset //   ; 
-  33 :  MsgSignalInvoke //    ; 
-  34 :  MsgMethodReply       ; 
+  33 :  MsgSignalInvoke  //   ; 
+  34 :  MsgMethodReply   //   ; 
+  35 :  MsgDocumentInitialized 
 )
 
 ServerMessageContent = (
@@ -614,7 +618,8 @@ ServerMessageContent = (
    MsgDocumentUpdate //  ; 
    MsgDocumentReset //   ; 
    MsgSignalInvoke //    ; 
-   MsgMethodReply        ; 
+   MsgMethodReply  //    ; 
+   MsgDocumentInitialized
 )
 
 ServerMessage = (

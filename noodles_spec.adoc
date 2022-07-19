@@ -662,9 +662,14 @@ MsgDocumentUpdate = {
 
 MsgDocumentReset = {
 }
+
+MsgDocumentInitialized = {
+}
 ----
 
-The document may be updated with `DocumentUpdate`, to modify the current methods and signals. It may also be completely reset. The reset message has no content. When a document is reset, all components and objects are considered to have their lifetimes ended, and all IDs are no longer valid.
+The document may be updated with `MsgDocumentUpdate`, to modify the current methods and signals. It may also be completely reset. The reset message has no content. When a document is reset, all components and objects are considered to have their lifetimes ended, and all IDs are no longer valid.
+
+The `MsgDocumentInitialized` message is used to indicate to clients when the initial scene state has been transferred. This is useful for clients (typically scripts) that wish to wait till all methods are available before trying to call something.
 
 
 == Client Messages
@@ -769,9 +774,9 @@ TableColumnInfo = {
 }
 
 TableInitData = {
-    columns : [* TableColumnInfo],
+    rows : [* TableColumnInfo],
     keys : [* int],
-    data : [ * TableColumn ],
+    data : [ * TableRow ],
     ? selections : [ * Selection ],
 }
 ----
@@ -781,7 +786,7 @@ TableInitData = {
 | 
 [source,c++] 
 ----
-void noo::tbl_insert([TableColumn]) 
+void noo::tbl_insert([TableRow])
 ----
 
 | Request to add rows of data to the table, as a pack of columns. The number of columns must match the number of columns in the table. Each column must have the same length.
@@ -789,7 +794,7 @@ void noo::tbl_insert([TableColumn])
 | 
 [source,c++] 
 ----
-void noo::tbl_update([Key], [TableColumn]) 
+void noo::tbl_update([Key], [TableRow])
 ----
 
 | Request to update many rows of data to the table, as a pack of columns. The number of keys must match the number of elements in each column. The number of columns must match the number of columns in the table.
@@ -797,7 +802,7 @@ void noo::tbl_update([Key], [TableColumn])
 | 
 [source,c++] 
 ----
-void noo::tbl_remove([Key]) 
+void noo::tbl_remove([Key])
 ----
 
 | Ask to remove a list of keys.
@@ -819,7 +824,7 @@ void noo::tbl_update_selection(Selection)
 |===
 
 [[table_signals]]
-.Table Methods
+.Table Signals
 [%header, cols="a,1"]
 |===
 | Signal Name | Description
@@ -827,14 +832,14 @@ void noo::tbl_update_selection(Selection)
 |
 [source,c++] 
 ----
-void noo::tbl_reset()
+void noo::tbl_reset(TblInit)
 ----
 | Reinitialize the table. Sent if the table is cleared or reset in some way.
 
 |
 [source,c++] 
 ----
-void noo::tbl_updated([Key], [TableColumn])
+void noo::tbl_updated([Key], [TableRow])
 ----
 | Rows were updated in the table.
 
@@ -856,7 +861,7 @@ void noo::tbl_selection_updated(Selection)
 
 - *Subscribe* This allows the client to receive signals from the table. Without this, no signal should be sent by the server regarding the table. When this call is made, the server will reply with an initialization object.
 
-- *Reset* Should the server issue the `noo::tbl_reset` signal, this would imply that the table has been reset, with no data, and no selections, but with the same header.
+- *Reset* Should the server issue the `noo::tbl_reset` signal, this would imply that the table has been reset, and provides new initilization data.
 
 - *Insertion* Data may be inserted into the table through both the row and many versions of the call. Note the key cannot be specified. The row length should be equal to the length of the header, and supplied in header order. The many version simply takes a list of rows to be inserted. Insertion success is demonstrated through reception of the \texttt{rows\_inserted} signal; this signal provides the data inserted along with the keys that were assigned to that row, i.e. the full row of data for all columns.
 
@@ -1038,6 +1043,6 @@ NOTE: This method, if it exists, should not be called very often; as we are samp
 === Connection
 Upon the connection of a client, the client first sends an introduction message. Any other message is ignored by the server until the introduction is provided.
 
-The server will then send a list of creation messages to build the scene. The server should send the messages in a way such that no component is referenced before it's creation message.
+The server will then send a list of creation messages to build the scene. The server should send the messages in a way such that no component is referenced before it's creation message. Afterwards, the server will then send `MsgDocumentInitialized` to signal the client that the initial scene has been constructed.
 
 From this point onward, the client can invoke methods, and the server can send signals and other messages.
