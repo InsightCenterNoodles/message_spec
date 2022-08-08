@@ -110,9 +110,11 @@ Methods are requests to the server from the client. They may take a set of data 
 
 Methods should be handled on the server as if they were serialized.
 
-Each method invocation is tracked by a client-generated arbitrary string. These shall be unique and never re-used. These strings shall not exceed 64 bytes. For servers, every method must generate a reply message; the only exception is if the client did not provide an invocation identifier string. A reply will be sent with the same invocation identifier string for the client to match responces. 
+Each method invocation is tracked by a client-generated arbitrary string. These shall be unique and never re-used. These strings shall not exceed 64 bytes. For servers, every method must generate a reply message; the only exception is if the client did not provide an invocation identifier string. A reply will be sent with the same invocation identifier string for the client to match responses. 
 
 There is a possibility that a method could be called on an object, that is then subsequently deleted, or replaced. In this case, a reply is still generated, and not squashed by the server; an exception is a good approach in these situations. Thus a client should be able to handle replies on objects that no longer exist.
+
+Methods must not be called on components that they are not attached to.
 
 Methods and signals are immutable.
 

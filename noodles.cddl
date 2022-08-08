@@ -152,7 +152,7 @@ InstanceSource = {
     view : BufferViewID,
 
     ; bytes between instance matrices. For best performance, there should be
-    ; no padding
+    ; no padding. If missing, assume tightly packed.
     stride : uint,
 
     ? bb : BoundingBox, 
@@ -468,7 +468,7 @@ Index = {
 GeometryPatch = {
     attributes   : [ + Attribute ],
     vertex_count : uint,
-    ? indicies   : Index, ; if missing, non indexed primitives only
+    ? indices   : Index, ; if missing, non indexed primitives only
     type : PrimitiveType, 
     material : MaterialID,
 }
