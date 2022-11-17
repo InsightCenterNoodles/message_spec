@@ -1048,3 +1048,7 @@ Upon the connection of a client, the client first sends an introduction message.
 The server will then send a list of creation messages to build the scene. The server should send the messages in a way such that no component is referenced before it's creation message. Afterwards, the server will then send `MsgDocumentInitialized` to signal the client that the initial scene has been constructed.
 
 From this point onward, the client can invoke methods, and the server can send signals and other messages.
+
+== End Matter
+
+NOODLES was Developed at the National Renewable Energy Laboratory (NREL), as a capability of the Insight Center https://www.nrel.gov/computational-science/insight-center.html

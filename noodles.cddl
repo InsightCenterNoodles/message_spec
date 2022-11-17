@@ -1,3 +1,5 @@
+; The NOODLES specification
+
 ; Common Definitions
 
 IDGroup = ( slot: uint, gen: uint )
@@ -327,7 +329,20 @@ MsgMaterialCreate = {
 
 MsgMaterialUpdate = {
     id : MaterialID,
-    ; TBD
+
+    ? pbr_info : PBRInfo, ; if missing, defaults
+    ? normal_texture : TextureRef,
+
+    ? occlusion_texture : TextureRef, ; assumed to be linear, ONLY R used
+    ? occlusion_texture_factor : float, ; assume 1 by default
+
+    ? emissive_texture : TextureRef, ; assumed to be SRGB. ignore A.
+    ? emissive_factor  : Vec3, ; all 1 by default
+
+    ? use_alpha    : bool,  ; false by default
+    ? alpha_cutoff : float, ; .5 by default
+
+    ? double_sided : bool, ; false by default
 }
 
 MsgMaterialDelete = {
