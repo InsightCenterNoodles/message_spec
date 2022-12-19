@@ -168,7 +168,6 @@ MsgEntityCreate = {
     ? transform : Mat4,
     
     ; ONE OF 
-    ? null_rep : any //
     ? text_rep : TextRepresentation //
     ? web_rep  : WebRepresentation //
     ? render_rep : RenderRepresentation,
