@@ -139,7 +139,7 @@ TextRepresentation = {
 }
 
 WebRepresentation = {
-    source : uri,
+    source : tstr,
     ? height : float, ; if missing, .5
     ? width : float, ; if missing, .5,
 }
@@ -155,7 +155,7 @@ InstanceSource = {
 
     ; bytes between instance matrices. For best performance, there should be
     ; no padding. If missing, assume tightly packed.
-    stride : uint,
+    ? stride : uint,
 
     ? bb : BoundingBox, 
 }
@@ -233,7 +233,7 @@ MsgPlotCreate = {
     
     ; ONE OF 
     ? simple_plot : SimplePlotInfo //
-    ? url_plot : uri,
+    ? url_plot : tstr,
     ; END ONE OF
 
     ? methods_list : [* MethodID],
@@ -246,7 +246,7 @@ MsgPlotUpdate = {
     
     ; ONE OF 
     ? simple_plot : text //
-    ? url_plot : uri,
+    ? url_plot : tstr,
     ; END ONE OF
 
     ? methods_list : [* MethodID],
@@ -266,7 +266,7 @@ MsgBufferCreate = {
 
     ; ONE OF 
     inline_bytes : bytes //
-    uri_bytes : uri,
+    uri_bytes : tstr,
     ; END ONE OF
 }
 
@@ -357,7 +357,7 @@ MsgImageCreate = {
     ; ONE OF 
     (
         buffer_source : BufferViewID //
-        uri_source : uri
+        uri_source : tstr
     ),
     ; END ONE OF
 }

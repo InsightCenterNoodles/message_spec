@@ -776,7 +776,7 @@ TableColumnInfo = {
 }
 
 TableInitData = {
-    rows : [* TableColumnInfo],
+    columns : [* TableColumnInfo],
     keys : [* int],
     data : [ * TableRow ],
     ? selections : [ * Selection ],
@@ -959,8 +959,6 @@ void noo::set_scale(Vec3 s)
 ----
 
 Movable objects allows the user to request to change the position of an object.
-
-\lstinputlisting[language=c++, firstline=9, lastline=11]{"./snippets/object_m_defs.cpp"}
 
 Positions, rotations and scales are in the coordinate system of the parent object. The rotation is to be provided as a quaternion, with $w$ being the last component.
 
