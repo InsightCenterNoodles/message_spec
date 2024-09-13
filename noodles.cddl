@@ -30,6 +30,9 @@ BufferID = [ id_grp ]
 
 BufferViewID = [ id_grp ]
 
+PhysicsID = [ id_grp ]
+
+
 InvokeIDType = {
     ; ONE OF
     entity : EntityID // 
@@ -101,6 +104,19 @@ TableInitData = {
     data : [ * TableRow ],
     ? selections : [ * Selection ],
 }
+
+URIParts = {
+    scheme : text, ; typically http
+    ? host : text,
+    ? port : int, ; Convention is 50001 for assets
+    ? path : text,
+    ? query : {},
+    ? fragment : text,
+}
+
+Location = 
+    text / ; a URI
+    URIParts
 
 ; ==============================================================================
 ; Server messages
@@ -180,6 +196,8 @@ MsgEntityCreate = {
     ? methods_list : [* MethodID],
     ? signals_list : [* SignalID],
 
+    ? physics_list : [* PhysicsID],
+
     ? influence : BoundingBox,
     ? visible : bool, ; default to true
 }
@@ -202,6 +220,8 @@ MsgEntityUpdate = {
     ? tags : [* tstr],
     ? methods_list : [* MethodID],
     ? signals_list : [* SignalID],
+
+    ? physics : [* PhysicsID],
 
     ? influence : BoundingBox,
     ? visible : bool,
@@ -266,7 +286,7 @@ MsgBufferCreate = {
 
     ; ONE OF 
     inline_bytes : bytes //
-    uri_bytes : tstr,
+    uri_bytes : Location,
     ; END ONE OF
 }
 
@@ -357,7 +377,7 @@ MsgImageCreate = {
     ; ONE OF 
     (
         buffer_source : BufferViewID //
-        uri_source : tstr
+        uri_source : Location
     ),
     ; END ONE OF
 }
@@ -556,6 +576,27 @@ MsgMethodReply = {
     ? method_exception : MethodException,
 }
 
+; Physics Messages =============================================================
+
+PhysicsType = "STREAMFLOW"
+    
+
+MsgPhysicsCreate = {
+    id: PhysicsID,
+    ? name: text,
+
+    type: PhysicsType,
+
+    ; if STREAMFLOW
+    ; (see noodles_physics)
+    ? stream_flow: any
+    ;
+}
+
+MsgPhysicsDelete = {
+
+}
+
 ; Aggregate Messages ===========================================================
 
 ServerMessageMapping = (
@@ -594,7 +635,9 @@ ServerMessageMapping = (
   32 :  MsgDocumentReset //   ; 
   33 :  MsgSignalInvoke  //   ; 
   34 :  MsgMethodReply   //   ; 
-  35 :  MsgDocumentInitialized 
+  35 :  MsgDocumentInitialized //
+  36 :  MsgPhysicsCreate //
+  37 :  MsgPhysicsDelete //
 )
 
 ServerMessageContent = (
@@ -633,7 +676,9 @@ ServerMessageContent = (
    MsgDocumentReset //   ; 
    MsgSignalInvoke //    ; 
    MsgMethodReply  //    ; 
-   MsgDocumentInitialized
+   MsgDocumentInitialized //
+   MsgPhysicsCreate //
+   MsgPhysicsDelete //
 )
 
 ServerMessage = (

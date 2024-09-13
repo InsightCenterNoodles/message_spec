@@ -256,7 +256,7 @@ Each instance is represented by a mat4, in column major format. Instances have a
 | p~x~ | c~r~ | r~x~ | s~x~
 | p~y~ | c~g~ | r~y~ | s~y~
 | p~z~ | c~b~ | r~z~ | s~z~
-| -    | c~a~ | r~w~ | -
+| t~x~ | c~a~ | r~w~ | t~y~
 |===
 
 === Tables
@@ -1004,6 +1004,36 @@ void noo::signal_attention(Vec3, string)
 If the signal omits the arguments, the whole object would like attention. If there is a position, a specific object-local coordinate would like attention. If there is a string in addition to that, a message should be displayed at that point.
 
 To attract attention, sounds, client-specific graphical adornment can all be used. For some clients, changing the camera view to include the point of attention can also be done.
+
+==== Time
+
+The document, or an individual entity, may have a concept of time.
+
+[source,cddl]
+----
+TimeMetadata = {
+    from: real
+    to: real
+    ? step: real
+}
+----
+
+[source,c++]
+----
+void noo::step_time(int)
+void noo::animate_time(int)
+void noo::delta_time(float)
+void noo::set_time(float)
+TimeMetadata noo::time_metadata()
+----
+
+Time information can be obtained with `time_metadata`. Note that for some applications, there is no constant stepping, so the step may be omitted. The bounds of valid time appear as `from` and `to`.
+
+The context can be requested to step forward or backward with `step_time`, where an argument < 0 implies 'backward' and > 0 implies 'forward'. = 0 means implies no action. The same applies to the animation of time. `animate_time` asks the server to start playing, with a direction and speed multiplier indicated by the integer argument. If the argument is zero, this implies 'stop playing'.
+
+Changing the time by a fixed delta can be done with `delta_time`. It is, of course, up to the server to either use that delta, or snap it to a timestep that may exist, etc.
+
+Setting the time to an absolute value is provided by `set_time`.
 
 ==== Entity Tags
 
