@@ -1,0 +1,55 @@
+; StreamFlow
+; A packed set of pre-computed flow lines
+; Flow lines are intended to indicate the path of a massless particle through 
+; a vector field. These lines can have sampled values along them (attributes).
+
+; Data for the flow is tightly packed into a buffer for decoding
+
+; The flow also provides a list of tetrahedra, to permit reconstruction of the
+; underlying vector field. If the list is zero, then clients may attempt to
+; build the field themselves, though, this is expected to be quite expensive
+
+StreamFlow = {
+    header: StreamFlowHeader,
+    data: BufferViewID, ; source 
+    ? offset: uint      ; offset into the source, default 0
+}
+
+; Data layout = {
+;     Topology,
+;     LineList
+; }
+; 
+; The topology is a list of tetrahedra. First is a count of integers. This 
+; count must be divisible by 4. Next is a list of integers, equal in length 
+; to the count. Each consecutive group of 4 integers is a tetrahedra, and 
+; are indicies into the following point list.
+;
+; Topology = {
+;     u32 topology_length,
+;     [u32, ...],
+; }
+;
+; Each line is tightly packed (no padding) list like so;
+; LineList = [Line, ...]
+; struct Line {
+;     sample_count: u32,
+;     samples: [vec3; sample_count],
+;     attrib_0: [type; sample_count],
+;     attrib_n: [type; sample_count],
+; }
+; Each consecutive sample, across lines, is indexed, with 0 being the first
+; sample encountered. Ex: line_0 [0, 1, 2, 3], line_1 [4, 5, 6]
+
+StreamFlowHeader = {
+    line_count: int,
+    attributes: [* StreamFlowAttribute]
+}
+
+StreamFlowFormat = "F32"
+
+StreamFlowAttribute = {
+    name: text,
+    data_type: StreamFlowFormat, ; for now, only F32 is supported
+    ? data_bounds: [text, text]; text must be convertable to the data_type
+}

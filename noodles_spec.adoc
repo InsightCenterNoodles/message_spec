@@ -248,15 +248,15 @@ This entity should be represented as a web page with a given URL. The page is re
 
 Instances are defined through the `InstanceSource` map, using a view of a buffer. The format must be a mat4. The view may have a stride, but it is recommended that this be zero to indicate tight packing to reduce copying and transformation costs.
 
-Each instance is represented by a mat4, in column major format. Instances have a position `p`, rotation `r` (as a quaternion), color `c`, scale `s`. Transforms should be applied in the following order: scaling, rotation, translation.
+Each instance is represented by a mat4, in column major format. Instances have a position `p`, rotation `r` (as a quaternion), texture `t`, scale `s`. Transforms should be applied in the following order: scaling, rotation, position. Texture transforms should be applied as texture scale, then texture delta.
 
 .Instance-matrix format
 [cols=4*]
 |===
-| p~x~ | c~r~ | r~x~ | s~x~
-| p~y~ | c~g~ | r~y~ | s~y~
-| p~z~ | c~b~ | r~z~ | s~z~
-| t~x~ | c~a~ | r~w~ | t~y~
+| p~x~ | t~du~ | r~x~ | s~x~
+| p~y~ | t~dv~ | r~y~ | s~y~
+| p~z~ | t~su~ | r~z~ | s~z~
+| ?    | t~sv~ | r~w~ | ?
 |===
 
 === Tables
