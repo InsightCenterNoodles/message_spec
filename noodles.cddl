@@ -118,6 +118,28 @@ Location =
     text / ; a URI
     URIParts
 
+WorldCoord = {
+    ; Y Should be up, -Z should be north
+    ? position : Vec3
+    ? rotation : Vec4 ; quaternion, with w being the imaginary part
+    ? scale : Vec3
+
+    ; one of these following items
+    ? geo : {
+        ; WGS84 coordinates!
+        latitude : float,
+        longitude : float,
+        ? altitude: float, ; meters above sea level. Optional.
+    }
+    ? qr : {
+        identity: text,
+    }
+}
+
+Transformation = 
+    Mat4 / ; a tranformation matrix
+    WorldCoord
+
 ; ==============================================================================
 ; Server messages
 ; ==============================================================================
@@ -181,7 +203,7 @@ MsgEntityCreate = {
     ? name : tstr
 
     ? parent : EntityID,
-    ? transform : Mat4,
+    ? transform : Transformation,
     
     ; ONE OF 
     ? text_rep : TextRepresentation //
@@ -205,7 +227,7 @@ MsgEntityCreate = {
 MsgEntityUpdate = {
     id : EntityID,
     ? parent : EntityID,
-    ? transform : Mat4,
+    ? transform : Transformation,
     
     ; ONE OF 
     ? null_rep : any //
