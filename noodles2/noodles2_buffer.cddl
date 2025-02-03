@@ -1,0 +1,47 @@
+.include "noodles2_common.cddl"
+
+KEY_SIZE   = KEY_USER_START
+KEY_INLINE = KEY_USER_START + 1
+KEY_FETCH  = KEY_USER_START + 2
+
+BufferGID = ResourceGID
+BufferResource = {
+    KEY_RESOURCE_ID   : BufferGID
+    KEY_RESOURCE_TYPE : RESOURCE_TYPE_BUFFER
+    ? KEY_RESOURCE_NAME : text
+    KEY_SIZE : uint
+
+    ? KEY_INLINE : bytes,
+    ? KEY_FETCH  : Location,
+}
+
+; Buffers can refer to bytes transferred in the message itself (inline), or
+; externally that must be fetched (fetch). Both can be specified, but this is
+; discouraged. If both are specified, the consumer can choose whichever source
+; is best for them. If a buffer has neither, this is an error! Some clients
+; may choose to simply abort, others may try to fake the buffer contents 
+; using the size key as a guide.
+
+; ======================
+
+KEY_SOURCE = KEY_USER_START
+KEY_TYPE   = KEY_USER_START + 1
+KEY_OFFSET = KEY_USER_START + 2
+KEY_LENGTH = KEY_USER_START + 3
+
+BUFFER_VIEW_TYPE = 
+    0 / ; unknown or unspecified
+    1 / ; Geometry data, consider staging to GPU
+    2 / ; Image data, consider decoding to texture
+
+BufferViewGID = ResourceGID
+BufferViewResource = {
+    KEY_RESOURCE_ID   : BufferViewGID
+    KEY_RESOURCE_TYPE : RESOURCE_TYPE_BUFFERVIEW
+    ? KEY_RESOURCE_NAME : text
+
+    KEY_SOURCE : BufferGID
+    ? KEY_TYPE : BUFFER_VIEW_TYPE, ; if missing, default is unknown
+    KEY_OFFSET : uint,
+    KEY_LENGTH : uint,
+}

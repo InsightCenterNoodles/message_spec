@@ -1,0 +1,23 @@
+; Definitions for signals and methods
+
+.include "noodles2_common.cddl"
+
+ProcedureGID = ResourceGID
+ProcedureResource = {
+    KEY_RESOURCE_ID   : ProcedureGID
+    KEY_RESOURCE_TYPE : RESOURCE_TYPE_PROCEDURE
+    KEY_RESOURCE_NAME : text ; This is REQUIRED
+
+    ? documentation: text
+    ? return_hint: text
+    argument_documentation: [ * ArgDoc ]
+}
+
+ArgDoc = 
+    "..." \ ; indicates variadic argument
+
+MethodArg = {
+    name : text,
+    documentation: text,
+    hint: text
+}

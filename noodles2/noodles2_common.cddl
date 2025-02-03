@@ -1,0 +1,78 @@
+; Common Definitions
+
+; GIDs imply that this ID is a concatination of bits of two 32 bit integers
+; This means this ID is a possible 64 bit integer.
+; The two integers are a slot and a generation. 
+; Assuming this is little endian, the high bits are the generation, and the 
+; low bits are the slot
+EntityGID   = int
+ResourceGID = uint
+
+Vec2 = [2 * float]
+Vec3 = [3 * float]
+Vec4 = [4 * float]
+
+Mat2 = [4 * float]
+Mat4 = [16 * float]
+
+Affine2D = {
+    0 : Mat2, ; matrix (rotation and scale)
+    1 : Vec2, ; translation
+}
+
+; An RGBA value- 4 normalized u8
+; byte[0..3] = r,g,b,a
+RGBA = uint
+COLOR_WHITE = 0xffffffff
+
+LINEAR_RGBA = Vec4
+LINEAR_RGBA_BLACK = [0.0,0.0,0.0,0.0]
+
+UV_CHANNEL = 0 \ 1 
+
+BoundingBox = {
+    ; concatinated vec3s (min, followed by max)
+    min_max : [6 * float],
+}
+
+; ==============================================================================
+
+URIParts = {
+    scheme : text, ; typically http
+    ? host : text,
+    ? port : int, ; Convention is 50001 for assets
+    ? path : text,
+    ? query : {},
+    ? fragment : text,
+}
+
+Location = 
+    text / ; a URI
+    URIParts
+
+; ==============================================================================
+
+KEY_ENTITY_ID = 0
+
+KEY_COMPONENT_TYPE = 1
+
+KEY_RESOURCE_ID = 2
+KEY_RESOURCE_TYPE = 3
+KEY_RESOURCE_NAME = 4
+
+KEY_USER_START = 10 ; all keys for components and such should start here
+
+; Resource Registry
+RESOURCE_TYPE_BUFFER            = 10
+RESOURCE_TYPE_BUFFERVIEW        = 11
+RESOURCE_TYPE_MESH              = 12
+RESOURCE_TYPE_STANDARD_MATERIAL = 13
+RESOURCE_TYPE_IMAGE             = 14
+RESOURCE_TYPE_PROCEDURE         = 15
+
+; Component Registry
+COMPONENT_TYPE_DOCUMENT          = 10
+COMPONENT_TYPE_PARENT            = 11
+COMPONENT_TYPE_TRANSFORM         = 12
+COMPONENT_TYPE_MESH              = 13
+COMPONENT_TYPE_STANDARD_MATERIAL = 14

@@ -1,0 +1,53 @@
+.include "noodles2_common.cddl"
+
+ImageGID = ResourceGID
+ImageResource = {
+    KEY_RESOURCE_ID   : ImageGID
+    KEY_RESOURCE_TYPE : RESOURCE_TYPE_IMAGE
+    ? KEY_RESOURCE_NAME : text
+
+    data_view : BufferViewGID,
+
+    ? sampler : ImageSampler,
+
+}
+
+ImageSampler = {
+    address_mode_u: ImageAddressMode,
+    address_mode_v: ImageAddressMode,
+    address_mode_w: ImageAddressMode,
+    mag_filter: ImageFilterMode,
+    min_filter: ImageFilterMode,
+    ? mipmap_filter: ImageFilterMode,
+    ? lod_min_clamp: float,
+    ? lod_max_clamp: float,
+    ? compare: ImageCompareFunction,
+    ? anisotropy_clamp: int,
+    ? border_color: ImageSamplerBorderColor,
+}
+
+ImageAddressMode = 
+    0 / ;ClampToEdge
+    1 / ;Repeat
+    2 / ;MirrorRepeat
+    3 / ;ClampToBorder
+
+ImageFilterMode = 
+    0 / ;Nearest
+    1 / ;Linear
+
+ImageCompareFunction =
+    0 / ;Never,
+    1 / ;Less,
+    2 / ;Equal,
+    3 / ;LessEqual,
+    4 / ;Greater,
+    5 / ;NotEqual,
+    6 / ;GreaterEqual,
+    7 / ;Always,
+
+ImageSamplerBorderColor =
+    0 / ;TransparentBlack,
+    1 / ;OpaqueBlack,
+    2 / ;OpaqueWhite,
+    3 / ;Zero,

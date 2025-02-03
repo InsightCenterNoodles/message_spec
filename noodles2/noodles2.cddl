@@ -1,0 +1,146 @@
+; The NOODLES 2 specification
+; Unless specified, all byte packing is little-endian
+
+
+
+InvokeIDType = {
+    ; ONE OF
+    entity : EntityID // 
+    table: TableID // 
+    plot: PlotID
+}
+
+MethodArg = { 
+    name: tstr, 
+    ? doc: tstr, 
+    ? editor_hint: tstr, 
+}
+
+Format = 
+    "U8" /
+    "U16"/
+    "U32"/
+    ;
+    "U8VEC4"/
+    ;
+    "U16VEC2"/
+    ;
+    "VEC2"/
+    "VEC3"/
+    "VEC4"/
+    ;
+    "MAT3"/
+    "MAT4"
+
+
+; Table selection
+
+SelectionRange = ( key_from_inclusive : int, key_to_exclusive : int )
+
+Selection = {
+    name : text,
+    ? rows : [* int],
+    ? row_ranges : [* SelectionRange],
+}
+
+TableColumn = [
+    * any
+]
+
+TableRow = [
+    * any
+]
+
+TableColumnInfo = {
+    name : text,
+    type : "TEXT" / "REAL" / "INTEGER" / "ANY"
+}
+
+TableInitData = {
+    columns : [* TableColumnInfo],
+    keys : [* int],
+    data : [ * TableRow ],
+    ? selections : [ * Selection ],
+}
+
+WorldCoord = {
+    ; Y Should be up, -Z should be north
+    ? position : Vec3
+    ? rotation : Vec4 ; quaternion, with w being the imaginary part
+    ? scale : Vec3
+
+    ; one of these following items
+    ? geo : {
+        ; WGS84 coordinates!
+        latitude : float,
+        longitude : float,
+        ? altitude: float, ; meters above sea level. Optional.
+    }
+    ? qr : {
+        identity: text,
+    }
+}
+
+PRS = {
+    ? 0: Vec3 ; position
+    ? 1: Vec4 ; rotation, quaternion, w is scalar component
+    ? 2: Vec3 ; scale
+}
+
+Transformation = 
+    Mat4 / ; a tranformation matrix
+    PRS
+
+; ==============================================================================
+; Server messages
+; ==============================================================================
+
+
+KEY_USER_START = 5
+
+; Entity Messages ==============================================================
+
+; add or remove an entity. If the entity is negative, this implies that the 
+; entity should be deleted
+MsgEntity = {
+    KEY_ENTITY_ID : EntityGID
+}
+
+; Component Messages ===========================================================
+
+; Add or remove a component from an entity. the component to use is abs
+; (component_id). We do this to take advantage of the compact CBOR negative 
+; rep. If the component_id is negative, then remove the component
+MsgComponent = {
+    KEY_ENTITY_ID      : EntityGID
+    ; KEY_COMPONENT_TYPE : int <- there MUST be a key like this in the content
+    $$ComponentContent
+}
+
+; ok so how do we do multiple
+MsgMultipleComponent = {
+    KEY_ENTITY_ID      : EntityGID
+    KEY_COMPONENT_TYPE : [* ComponentContent]
+}
+
+; Resource Message =============================================================
+
+; Add or update a Resource. Resources are identified by an (ID, TYPE_ID) tuple.
+; 
+
+MsgResource = {
+    ; KEY_RESOURCE_ID   : ResourceGID
+    ; KEY_RESOURCE_TYPE : uint <- all resource messages MUST have this
+    ;? KEY_RESOURCE_NAME : text <- optional human name for resource
+    $$ResourceContent
+}
+
+ResourceContent //= (
+    ; ANY RESOURCE CONTENT
+)
+
+; Components ===================================================================
+
+ComponentContent //= (
+    ; ANY COMPONENT TYPE
+)

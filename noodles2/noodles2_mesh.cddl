@@ -1,0 +1,62 @@
+.include "noodles2_common.cddl"
+
+KEY_MESH_UNCOMPRESSED = KEY_USER_START
+
+MeshGID = ResourceGID
+MeshResource = {
+    KEY_RESOURCE_ID   : MeshGID
+    KEY_RESOURCE_TYPE : RESOURCE_TYPE_MESH
+    ? KEY_RESOURCE_NAME : text
+
+    KEY_MESH_UNCOMPRESSED : UncompressedMeshData
+    
+}
+
+UncompressedMeshData = {
+    view : BufferViewGID
+
+    position : Attribute
+    ? normal : Attribute
+    ? tangent : Attribute
+    ? uv_0 : Attribute
+    ? uv_1 : Attribute
+
+    ? index: Index
+
+    ? type : PrimitiveType ; if missing assume triangles
+}
+
+AttributeFormat = 
+    0 / ;vec2
+    1 / ;vec3
+    2 / ;vec4
+    3   ;u16vec2 (normalized)
+
+Attribute = {
+    offset: uint
+    stride: uint
+    format: AttributeFormat
+
+    ? bounding_box: BoundingBox
+}
+
+IndexFormat = 
+    0 / ; u8
+    1 / ; u16
+    2 ; u32
+
+Index = {
+    count: uint,
+    offset : uint,
+    format : IndexFormat
+}
+
+PrimitiveType = 
+    0 ; triangles
+
+
+KEY_MESH = KEY_USER_START
+MeshComponent = (
+    KEY_COMPONENT_TYPE : COMPONENT_TYPE_MESH
+    KEY_MESH: MeshGID
+)

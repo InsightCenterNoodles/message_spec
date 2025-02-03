@@ -1,0 +1,28 @@
+; Definitions for scene tree
+
+.include "noodles2_common.cddl"
+
+; Define entity hierarchy
+KEY_PARENT = KEY_USER_START
+
+ParentComponent = (
+    KEY_COMPONENT_TYPE : COMPONENT_TYPE_PARENT
+    KEY_PARENT: EntityGID
+)
+
+; Define relative transformations for entities
+KEY_TRANSFORM_POSITION = KEY_USER_START
+KEY_TRANSFORM_ROTATION = KEY_USER_START + 1
+KEY_TRANSFORM_SCALE = KEY_USER_START + 2
+
+TransformComponent = (
+    KEY_COMPONENT_TYPE : COMPONENT_TYPE_TRANSFORM
+    ? KEY_TRANSFORM_POSITION : Vec3
+    ? KEY_TRANSFORM_ROTATION : Vec4
+    ? KEY_TRANSFORM_SCALE : Vec3
+)
+
+; Define a Document, or entity that acts like a global?
+DocumentComponent = (
+    KEY_COMPONENT_TYPE : COMPONENT_TYPE_DOCUMENT
+)
